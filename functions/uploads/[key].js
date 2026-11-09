@@ -3,6 +3,9 @@ export async function onRequest({ params, env }) {
   if (typeof key !== "string" || !/^[0-9a-f-]{36}\.(jpg|png|webp)$/i.test(key)) {
     return new Response("Not found.", { status: 404 });
   }
+  if (!env.WORK_IMAGES) {
+    return new Response("Image uploads are not configured.", { status: 503 });
+  }
 
   const image = await env.WORK_IMAGES.get(key);
   if (!image) {

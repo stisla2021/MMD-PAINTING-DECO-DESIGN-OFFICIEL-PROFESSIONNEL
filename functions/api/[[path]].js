@@ -286,6 +286,12 @@ async function getWorks(request, env) {
   if (authorizationError) {
     return authorizationError;
   }
+  if (!env.WORK_IMAGES) {
+    return errorResponse(
+      "Work uploads are not configured. Configure the WORK_IMAGES R2 binding.",
+      503,
+    );
+  }
 
   const contentLength = Number(request.headers.get("content-length") ?? 0);
   if (contentLength > maximumImageSize + 16 * 1024) {
@@ -390,6 +396,12 @@ async function deleteWork(request, env, encodedId) {
   const authorizationError = await authorize(request, env);
   if (authorizationError) {
     return authorizationError;
+  }
+  if (!env.WORK_IMAGES) {
+    return errorResponse(
+      "Work uploads are not configured. Configure the WORK_IMAGES R2 binding.",
+      503,
+    );
   }
 
   let id;

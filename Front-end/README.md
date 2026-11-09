@@ -66,12 +66,13 @@ and R2 for project images.
 
 ## Deploy to Cloudflare's free tier
 
-The site is configured for Cloudflare Pages, Pages Functions, D1, and R2. Static
-pages use the `pages.dev` address, and API requests use that same origin. Pages
-serves static files without invoking a Function; only `/api/*` and `/uploads/*`
-are routed through Functions. The current Wrangler release needs Node.js 22 or
-newer for Cloudflare deployment commands; local `npm run dev` still works with
-the Node.js 20 minimum documented for the Express backend.
+The site is configured for Cloudflare Pages, Pages Functions, and D1. R2 is
+optional and is only needed for admin photo uploads. Static pages use the
+`pages.dev` address, and API requests use that same origin. Pages serves static
+files without invoking a Function; only `/api/*` and `/uploads/*` are routed
+through Functions. The current Wrangler release needs Node.js 22 or newer for
+Cloudflare deployment commands; local `npm run dev` still works with the
+Node.js 20 minimum documented for the Express backend.
 
 1. Create a Cloudflare account and sign in to Wrangler from the project root:
 
@@ -80,18 +81,24 @@ the Node.js 20 minimum documented for the Express backend.
    npx wrangler login
    ```
 
-2. Create the D1 database and R2 bucket:
+2. Create the D1 database:
 
    ```powershell
    npm run cloudflare:db:create
-   npm run cloudflare:r2:create
    ```
 
-   The D1 command writes its new ID into `../wrangler.jsonc`.
+   Copy the D1 database ID printed by the create command into the existing
+   `DB` entry's `database_id` in `../wrangler.jsonc`; do not add another
+   `d1_databases` entry. Admin photo uploads stay disabled until R2 is activated.
+   To enable them later, activate R2 in the Cloudflare dashboard, create the
+   bucket with `npm run cloudflare:r2:create`, and add the `WORK_IMAGES` R2
+   binding to `../wrangler.jsonc`. R2 may require a payment method; usage beyond
+   the included monthly allowance is billed.
 
-3. Create a Pages project named `mmd-painting-deco-design` using direct upload
-   (no Git connection is required). Apply the database migration and set the
-   admin key as a Cloudflare secret:
+3. Create a Pages project named `mmd-painting-deco-design`, or use the existing
+   Git-connected project. For Git setup, use the repository root, no build
+   command, and `Front-end` as the output directory. Apply the database
+   migration and set the admin key as a Cloudflare secret:
 
    ```powershell
    npm run cloudflare:migrate

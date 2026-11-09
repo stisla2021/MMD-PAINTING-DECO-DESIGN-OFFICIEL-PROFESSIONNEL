@@ -7,14 +7,8 @@
     {
       "binding": "DB",
       "database_name": "mmd-painting-db",
-      "database_id": "00000000-0000-0000-0000-000000000000",
+      "database_id": "15ff10f8-a47e-4f21-b74f-58959e26a671",
       "migrations_dir": "migrations"
-    }
-  ],
-  "r2_buckets": [
-    {
-      "binding": "WORK_IMAGES",
-      "bucket_name": "mmd-painting-uploads"
     }
   ]
 }

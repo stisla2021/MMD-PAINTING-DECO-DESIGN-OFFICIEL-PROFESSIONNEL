@@ -270,6 +270,27 @@ test("rejects images whose bytes do not match their declared type", async () => 
   assert.equal(response.status, 400);
 });
 
+test("reports disabled work uploads when the R2 binding is unavailable", async () => {
+  const env = createEnvironment();
+  delete env.WORK_IMAGES;
+
+  const uploadResponse = await onRequest({
+    request: makeRequest("/api/works", {
+      method: "POST",
+      headers: { "X-Admin-Key": adminApiKey },
+      body: pngUpload(),
+    }),
+    env,
+  });
+  assert.equal(uploadResponse.status, 503);
+
+  const imageResponse = await serveUpload({
+    params: { key: "123e4567-e89b-12d3-a456-426614174000.png" },
+    env,
+  });
+  assert.equal(imageResponse.status, 503);
+});
+
 test("limits API requests by client IP", async () => {
   const env = createEnvironment();
   let response;
