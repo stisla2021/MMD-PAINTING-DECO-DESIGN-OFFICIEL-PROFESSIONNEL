@@ -65,6 +65,7 @@ const mmdFrenchTranslations = {
     "Mustapha Jallow is the owner of MMD PAINTING. He is shown here working on a painting project.": "Mustapha Jallow est le propriétaire de MMD PAINTING. On le voit ici travailler sur un projet de peinture.",
     "Painting, decoration, and design": "Peinture, décoration et design",
     "MMD PAINTING provides painting, decoration, and design services for homes and businesses.": "MMD PAINTING propose des services de peinture, décoration et design pour les particuliers et les professionnels.",
+    "Available for painting projects throughout The Gambia and Senegal.": "Disponible pour vos travaux de peinture partout en Gambie et au Sénégal.",
     "Projects can include interior and exterior painting, commercial spaces, and decorative details. We work with each customer to understand the space, the desired finish, and the project scope.": "Les projets peuvent comprendre la peinture intérieure ou extérieure, les espaces commerciaux et les finitions décoratives. Nous échangeons avec chaque client pour comprendre l'espace, le rendu souhaité et l'étendue des travaux.",
     "Every project is different. Contact us to talk through what you have in mind and the next steps.": "Chaque projet est différent. Contactez-nous pour discuter de votre idée et des prochaines étapes.",
     "Explore Services": "Découvrir les services",
