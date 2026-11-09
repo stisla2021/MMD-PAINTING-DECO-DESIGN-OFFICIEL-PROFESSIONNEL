@@ -11,7 +11,7 @@ const mmdFrenchTranslations = {
     "MMD PAINTING logo": "Logo MMD PAINTING",
     "House painter at work": "Peintre en plein travail",
     "Painting crew": "Équipe de peintres",
-    "Mustapha Jallow working on a painting project": "Mustapha Jallow au travail sur un projet de peinture",
+    "Mustapha Jallow and a coworker working on a painting project": "Mustapha Jallow et un collègue travaillant sur un projet de peinture",
     "Choose language": "Choisir la langue",
     Language: "Langue",
     Home: "Accueil",

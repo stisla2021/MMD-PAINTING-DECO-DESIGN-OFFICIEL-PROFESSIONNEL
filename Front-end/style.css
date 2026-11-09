@@ -364,7 +364,16 @@ section {
 }
 
 .owner-photo img {
-    object-position: center 25%;
+    object-fit: contain;
+    object-position: center;
+}
+
+.owner-photo {
+    background-color: #f1f3f5;
+}
+
+.hero-image.owner-photo:hover img {
+    transform: none;
 }
 
 .about-content h3 {
