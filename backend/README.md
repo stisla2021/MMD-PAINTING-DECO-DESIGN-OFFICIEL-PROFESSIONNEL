@@ -53,6 +53,11 @@ Required: `name`, valid `email`, and `service` (`interior`, `exterior`, `both`,
 ```
 
 Returns `201 Created` after saving the request in `data/quotes.json`.
+When Resend is configured with `RESEND_API_KEY` and `QUOTE_ALERT_FROM`, the API
+also sends a generic alert to `QUOTE_ALERT_TO` (the company email by default).
+The alert contains no customer details; it links to the protected admin inbox.
+If sending fails, the request remains saved and the response includes
+`"notificationSent": false`; check the server log and Resend configuration.
 
 ### `GET /api/quotes`
 

@@ -11,6 +11,8 @@ const allowedServices = new Set([
   "commercial",
   "other",
 ]);
+const quoteAlertRecipient = "mustaphajallow534@gmail.com";
+const quoteAdminUrl = "https://mmd-painting-deco-design.pages.dev/admin";
 
 function readText(value, field, { required = false, maxLength }) {
   if (typeof value !== "string") {
@@ -28,7 +30,51 @@ function readText(value, field, { required = false, maxLength }) {
   return { value: text };
 }
 
-export function createQuotesRouter({ store, adminApiKey }) {
+async function sendQuoteAlert(emailConfig) {
+  if (!emailConfig.RESEND_API_KEY || !emailConfig.QUOTE_ALERT_FROM) {
+    console.error(
+      "Quote email alert is not configured; set RESEND_API_KEY and QUOTE_ALERT_FROM.",
+    );
+    return false;
+  }
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${emailConfig.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: emailConfig.QUOTE_ALERT_FROM,
+        to: [emailConfig.QUOTE_ALERT_TO || quoteAlertRecipient],
+        subject: "New quote request | MMD PAINTING",
+        text: `A new quote request was received. Open the protected admin inbox to review it: ${quoteAdminUrl}`,
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!response.ok) {
+      console.error(
+        "Resend rejected the quote email alert.",
+        response.status,
+        await response.text(),
+      );
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Could not send the quote email alert.", error);
+    return false;
+  }
+}
+
+export function createQuotesRouter({
+  store,
+  adminApiKey,
+  emailConfig = process.env,
+}) {
   const router = Router();
 
   router.get("/", (request, response) => {
@@ -47,7 +93,7 @@ export function createQuotesRouter({ store, adminApiKey }) {
     return response.json({ quotes });
   });
 
-  router.post("/", (request, response) => {
+  router.post("/", async (request, response) => {
     const body = request.body;
     if (!body || typeof body !== "object" || Array.isArray(body)) {
       return response.status(400).json({ error: "Request body must be an object." });
@@ -87,8 +133,10 @@ export function createQuotesRouter({ store, adminApiKey }) {
     };
 
     store.append(quote);
+    const notificationSent = await sendQuoteAlert(emailConfig);
     return response.status(201).json({
       message: "Quote request received.",
+      notificationSent,
       quote: { id: quote.id, createdAt: quote.createdAt },
     });
   });

@@ -15,6 +15,8 @@ const allowedServices = new Set([
   "commercial",
   "other",
 ]);
+const quoteAlertRecipient = "mustaphajallow534@gmail.com";
+const quoteAdminUrl = "https://mmd-painting-deco-design.pages.dev/admin";
 
 function jsonResponse(body, status = 200, headers = {}) {
   return Response.json(body, { status, headers });
@@ -62,6 +64,46 @@ function readText(value, field, { required = false, maxLength }) {
     return { error: `${field} must be ${maxLength} characters or fewer.` };
   }
   return { value: text };
+}
+
+async function sendQuoteAlert(env) {
+  if (!env.RESEND_API_KEY || !env.QUOTE_ALERT_FROM) {
+    console.error(
+      "Quote email alert is not configured; set RESEND_API_KEY and QUOTE_ALERT_FROM.",
+    );
+    return false;
+  }
+
+  try {
+    const response = await fetch("https://api.resend.com/emails", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${env.RESEND_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        from: env.QUOTE_ALERT_FROM,
+        to: [env.QUOTE_ALERT_TO || quoteAlertRecipient],
+        subject: "New quote request | MMD PAINTING",
+        text: `A new quote request was received. Open the protected admin inbox to review it: ${quoteAdminUrl}`,
+      }),
+      signal: AbortSignal.timeout(8000),
+    });
+
+    if (!response.ok) {
+      console.error(
+        "Resend rejected the quote email alert.",
+        response.status,
+        await response.text(),
+      );
+      return false;
+    }
+
+    return true;
+  } catch (error) {
+    console.error("Could not send the quote email alert.", error);
+    return false;
+  }
 }
 
 async function isAuthorized(request, configuredKey) {
@@ -228,8 +270,13 @@ async function getQuotes(request, env) {
     )
     .run();
 
+  const notificationSent = await sendQuoteAlert(env);
   return jsonResponse(
-    { message: "Quote request received.", quote: { id, createdAt } },
+    {
+      message: "Quote request received.",
+      notificationSent,
+      quote: { id, createdAt },
+    },
     201,
   );
 }

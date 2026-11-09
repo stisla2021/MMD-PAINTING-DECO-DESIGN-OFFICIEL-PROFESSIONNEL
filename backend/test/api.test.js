@@ -47,6 +47,54 @@ test("accepts and persists a valid quote request", async () => {
   assert.ok(saved.quote.id);
 });
 
+test("keeps a quote saved when Resend cannot send the alert", async () => {
+  const originalFetch = globalThis.fetch;
+  const previousEnvironment = {
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
+    QUOTE_ALERT_FROM: process.env.QUOTE_ALERT_FROM,
+    QUOTE_ALERT_TO: process.env.QUOTE_ALERT_TO,
+  };
+  let emailPayload;
+  process.env.RESEND_API_KEY = "test-resend-key";
+  process.env.QUOTE_ALERT_FROM = "MMD PAINTING <notifications@example.com>";
+  process.env.QUOTE_ALERT_TO = "alerts@example.com";
+  globalThis.fetch = async (url, init) => {
+    assert.equal(url, "https://api.resend.com/emails");
+    emailPayload = JSON.parse(init.body);
+    return new Response("Resend unavailable", { status: 503 });
+  };
+
+  try {
+    const response = await originalFetch(`${baseUrl}/api/quotes`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Saved Customer",
+        email: "saved@example.com",
+        service: "interior",
+      }),
+    });
+    assert.equal(response.status, 201);
+    assert.equal((await response.json()).notificationSent, false);
+    assert.doesNotMatch(emailPayload.text, /Saved Customer|saved@example\.com/);
+
+    const inbox = await originalFetch(`${baseUrl}/api/quotes`, {
+      headers: { "X-Admin-Key": adminApiKey },
+    });
+    const { quotes } = await inbox.json();
+    assert.ok(quotes.some((quote) => quote.email === "saved@example.com"));
+  } finally {
+    globalThis.fetch = originalFetch;
+    for (const [key, value] of Object.entries(previousEnvironment)) {
+      if (value === undefined) {
+        delete process.env[key];
+      } else {
+        process.env[key] = value;
+      }
+    }
+  }
+});
+
 test("lists quote requests only for an authorized admin", async () => {
   const postResponse = await fetch(`${baseUrl}/api/quotes`, {
     method: "POST",

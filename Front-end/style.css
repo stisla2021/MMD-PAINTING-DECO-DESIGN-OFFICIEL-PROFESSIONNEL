@@ -770,6 +770,50 @@ section {
     font-size: 1.05rem;
 }
 
+.whatsapp-cta {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 6px;
+    padding: 10px 14px;
+    border-radius: 8px;
+    background: #128c7e;
+    color: white;
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.whatsapp-cta:hover {
+    background: #0e766b;
+}
+
+.whatsapp-cta:focus-visible {
+    outline: 3px solid var(--accent);
+    outline-offset: 3px;
+}
+
+.quote-next-steps {
+    margin-top: 34px;
+    padding: 20px;
+    border-left: 4px solid var(--accent);
+    border-radius: 8px;
+    background: var(--light);
+}
+
+.quote-next-steps h4 {
+    margin-bottom: 12px;
+    color: var(--primary);
+}
+
+.quote-next-steps ol {
+    margin: 0;
+    padding-left: 22px;
+    color: var(--gray);
+}
+
+.quote-next-steps li + li {
+    margin-top: 10px;
+}
+
 .info-item {
     display: flex;
     align-items: flex-start;
@@ -845,6 +889,13 @@ section {
 .form-group textarea {
     resize: vertical;
     min-height: 130px;
+}
+
+.form-privacy {
+    margin: 16px 0 0;
+    color: var(--gray);
+    font-size: 0.9rem;
+    line-height: 1.5;
 }
 
 /* ========== FOOTER ========== */

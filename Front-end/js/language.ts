@@ -249,9 +249,27 @@ const mmdFrenchTranslations: Record<string, string> = {
     "Parlez-nous de votre projet de peinture et nous vous répondrons rapidement.",
   "Request a Free Estimate": "Demander une estimation gratuite",
   "Fill out the form and we’ll contact you within 24 hours with a free, no-obligation quote for your house painting project.":
-    "Remplissez le formulaire et nous vous contacterons sous 24 heures avec un devis gratuit et sans engagement pour votre projet de peinture.",
+    "Remplissez le formulaire et nous vous contacterons sous 24 heures pour discuter de votre projet et de la prochaine étape vers une estimation gratuite et sans engagement.",
+  "Fill out the form and we’ll contact you within 24 hours to discuss your project and the next step toward a free, no-obligation estimate.":
+    "Remplissez le formulaire et nous vous contacterons sous 24 heures pour discuter de votre projet et de la prochaine étape vers une estimation gratuite et sans engagement.",
   Phone: "Téléphone",
+  WhatsApp: "WhatsApp",
+  "Chat with the owner on WhatsApp: +220 6240363":
+    "Écrivez au propriétaire sur WhatsApp : +220 6240363",
+  "Service Area": "Zone desservie",
+  "The Gambia and Senegal": "La Gambie et le Sénégal",
   Social: "Réseaux sociaux",
+  "What happens next?": "Que se passe-t-il ensuite ?",
+  "Submit the form with a few project details and the service location.":
+    "Envoyez le formulaire avec quelques détails sur le projet et son emplacement.",
+  "We’ll call or WhatsApp you within 24 hours to discuss details and next steps.":
+    "Nous vous appellerons ou vous contacterons par WhatsApp sous 24 heures pour discuter des détails et des prochaines étapes.",
+  "We’ll arrange an assessment if needed and provide a free, no-obligation estimate before work begins.":
+    "Si nécessaire, nous organiserons une visite d'évaluation et fournirons une estimation gratuite et sans engagement avant le début des travaux.",
+  "We use your details only to respond to your quote request and prepare your estimate. Your contact details are not displayed publicly.":
+    "Vos informations servent uniquement à répondre à votre demande de devis et à préparer votre estimation. Vos coordonnées ne sont pas affichées publiquement.",
+  "Your request was received, but we couldn't notify the team automatically. For a faster response, please call or WhatsApp +220 6240363.":
+    "Votre demande a bien été reçue, mais l'équipe n'a pas pu être avertie automatiquement. Pour une réponse plus rapide, appelez ou écrivez sur WhatsApp au +220 6240363.",
   "Full Name *": "Nom complet *",
   "Your full name": "Votre nom complet",
   "Email Address *": "Adresse e-mail *",
@@ -264,6 +282,8 @@ const mmdFrenchTranslations: Record<string, string> = {
   "Project Details": "Détails du projet",
   "Number of rooms, approximate size, preferred start date, or any special requests...":
     "Nombre de pièces, dimensions approximatives, date de début souhaitée ou demandes particulières...",
+  "Town or area, number of rooms, approximate size, preferred start date, or any special requests...":
+    "Ville ou quartier, nombre de pièces, dimensions approximatives, date de début souhaitée ou demandes particulières...",
   "Manage quote requests and project photos":
     "Gérez les demandes de devis et les photos de projets",
   "Admin access": "Accès administrateur",

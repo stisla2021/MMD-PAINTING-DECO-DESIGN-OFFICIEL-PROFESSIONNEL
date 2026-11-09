@@ -191,6 +191,43 @@ test("accepts valid quotes and serves the health endpoint", async () => {
   assert.equal(response.status, 201);
   assert.equal(env.tables.quotes.length, 1);
   assert.equal(env.tables.quotes[0].email, "test@example.com");
+  assert.equal((await response.json()).notificationSent, false);
+});
+
+test("sends a generic Resend alert without customer details", async () => {
+  const env = createEnvironment();
+  env.RESEND_API_KEY = "test-resend-key";
+  env.QUOTE_ALERT_FROM = "MMD PAINTING <notifications@example.com>";
+  let emailPayload;
+  const originalFetch = globalThis.fetch;
+  globalThis.fetch = async (url, init) => {
+    assert.equal(url, "https://api.resend.com/emails");
+    emailPayload = JSON.parse(init.body);
+    return new Response("{}", { status: 200 });
+  };
+
+  try {
+    const response = await onRequest({
+      request: makeRequest("/api/quotes", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          name: "Private Customer",
+          email: "private@example.com",
+          service: "interior",
+        }),
+      }),
+      env,
+    });
+
+    assert.equal(response.status, 201);
+    assert.equal((await response.json()).notificationSent, true);
+    assert.equal(emailPayload.to[0], "mustaphajallow534@gmail.com");
+    assert.match(emailPayload.text, /\/admin/);
+    assert.doesNotMatch(emailPayload.text, /Private Customer|private@example\.com/);
+  } finally {
+    globalThis.fetch = originalFetch;
+  }
 });
 
 test("protects the quote inbox and returns saved requests to admins", async () => {

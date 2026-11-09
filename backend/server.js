@@ -77,6 +77,7 @@ export function createApp({
     createQuotesRouter({
       store: createJsonStore(path.join(dataDirectory, "quotes.json")),
       adminApiKey,
+      emailConfig: process.env,
     }),
   );
   app.use(

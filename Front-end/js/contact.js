@@ -48,7 +48,10 @@ quoteForm.addEventListener("submit", async (event) => {
                 status: response.status,
             }));
         }
-        alert(window.mmdTranslateText("Thank you! Your quote request has been received. We will contact you soon."));
+        const result = await response.json();
+        alert(window.mmdTranslateText(result.notificationSent === false
+            ? "Your request was received, but we couldn't notify the team automatically. For a faster response, please call or WhatsApp +220 6240363."
+            : "Thank you! Your quote request has been received. We will contact you soon."));
         quoteForm.reset();
     }
     catch (error) {

@@ -58,8 +58,13 @@ and R2 for project images.
 ### Current behavior
 - The contact form validates and submits name, email, phone, service, and
   project details to `/api/quotes`
-- It shows a confirmation and resets on success, or reports an error if the
-  API is unavailable
+- New quote requests trigger a generic email alert through Resend when
+  `RESEND_API_KEY` and `QUOTE_ALERT_FROM` are configured. The alert links to the
+  protected admin inbox and does not include customer details. Requests are
+  still saved if the alert cannot be sent, and the contact page offers a
+  WhatsApp fallback.
+- The form shows a confirmation and resets after a saved request, or reports an
+  error if the API is unavailable
 - Comments can be submitted to and read from `/api/comments`
 - The protected admin page lists quote requests and manages recent-work photos;
   enter the `ADMIN_API_KEY` configured in `../backend/.env` for local use or
@@ -109,6 +114,13 @@ Node.js 20 minimum documented for the Express backend.
 
    Copy the generated key into the secret prompt and keep a private copy for
    unlocking `admin.html`. Never put it in this repository or frontend code.
+
+   To receive email alerts for quote requests, add `RESEND_API_KEY` as a Pages
+   secret and set `QUOTE_ALERT_FROM` to a sender address verified in Resend.
+   `QUOTE_ALERT_TO` is optional and defaults to the company email configured in
+   the quote API. The alert contains only a notification and a link to the
+   protected admin inbox, not customer details. Set the same values in
+   `backend/.env` for local development.
 
 4. Deploy the site:
 
