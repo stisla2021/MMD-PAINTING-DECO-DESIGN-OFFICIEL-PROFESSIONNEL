@@ -108,7 +108,7 @@ async function loadWorks(): Promise<void> {
     window.mmdSetTranslatedText(
       worksStatus,
       result.works.length === 0
-        ? "Recent projects will appear here as they are added."
+        ? "More recent projects will appear here as they are added."
         : "",
     );
   } catch (error) {

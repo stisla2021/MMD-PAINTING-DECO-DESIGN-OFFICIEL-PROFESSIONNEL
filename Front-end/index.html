@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MMD DECO Design Official | Painting &amp; Design</title>
+    <meta name="description" content="MMD PAINTING provides interior and exterior painting, decoration, and design for homes and businesses in The Gambia and Senegal.">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="images/mmd-deco-logo.png">
 </head>
@@ -42,6 +43,7 @@
         </div>
     </header>
 
+    <main>
     <!-- HERO -->
     <section class="hero">
         <div class="container">
@@ -60,6 +62,89 @@
             </div>
         </div>
     </section>
+
+    <section class="home-services" aria-labelledby="homeServicesHeading">
+        <div class="container">
+            <div class="section-title">
+                <h2 id="homeServicesHeading">Painting for Every Space</h2>
+                <p>Interior and exterior painting for homes and businesses across The Gambia and Senegal.</p>
+            </div>
+            <div class="services-grid home-service-grid">
+                <article class="service-card home-service-card">
+                    <img class="service-photo" src="images/interior-house-painting.png" alt="Interior painting project in a home" loading="lazy">
+                    <div class="home-service-copy">
+                        <h3>Interior Painting</h3>
+                        <p>Refresh rooms, hallways, and ceilings with careful preparation and tidy finishes.</p>
+                        <a class="btn btn-secondary" href="service.html">View All Services</a>
+                    </div>
+                </article>
+                <article class="service-card home-service-card">
+                    <img class="service-photo" src="images/exterior-house-painting.png" alt="Exterior painting project on a house" loading="lazy">
+                    <div class="home-service-copy">
+                        <h3>Exterior Painting</h3>
+                        <p>Refresh exterior walls, gates, and other painted surfaces with a clean, durable finish.</p>
+                        <a class="btn btn-secondary" href="service.html">View All Services</a>
+                    </div>
+                </article>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-projects" aria-labelledby="homeRecentWorkHeading">
+        <div class="container">
+            <div class="section-title">
+                <h2 id="homeRecentWorkHeading">Recent Work</h2>
+                <p>A recent interior refresh by the MMD team.</p>
+            </div>
+            <article class="project-feature-card">
+                <img src="images/recent-hallway-project.png" alt="Recently finished hallway with soft blue walls and white trim" loading="lazy">
+                <div class="project-feature-copy">
+                    <p class="project-feature-category">Interior Painting</p>
+                    <h3>Blue Hallway Refresh</h3>
+                    <p>Soft blue walls, crisp white trim, and a bright finish make this hallway feel fresh and welcoming.</p>
+                    <a class="btn" href="portfolio.html">See More of Our Work</a>
+                </div>
+            </article>
+            <div class="home-more-work">
+                <h3>More Recent Projects</h3>
+                <p id="worksStatus" class="comment-status" role="status" aria-live="polite">Loading more recent work...</p>
+                <div class="portfolio-grid" id="worksGrid" aria-live="polite"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-team" aria-labelledby="homeTeamHeading">
+        <div class="container home-team-grid">
+            <div class="home-team-copy">
+                <h2 id="homeTeamHeading">Meet the Team Behind the Work</h2>
+                <p>Our team of 12 works together on painting, decoration, and design projects.</p>
+                <p>We serve homes and businesses across The Gambia and Senegal, from preparation through the final review.</p>
+                <a class="btn btn-secondary" href="about.html">Meet the Team</a>
+            </div>
+            <div class="home-team-photos">
+                <figure>
+                    <img src="images/mustapha-owner.png" alt="Mustapha Jallow and a coworker working on a painting project" loading="lazy">
+                    <figcaption>Mustapha Jallow</figcaption>
+                </figure>
+                <figure>
+                    <img src="images/mmd-team.png" alt="MMD PAINTING team working together" loading="lazy">
+                    <figcaption>MMD PAINTING Team</figcaption>
+                </figure>
+            </div>
+        </div>
+    </section>
+
+    <section class="home-contact-cta">
+        <div class="container">
+            <h2>Ready to Refresh Your Space?</h2>
+            <p>Tell us what you have in mind and we’ll discuss the project, schedule, and next steps.</p>
+            <div class="hero-buttons">
+                <a class="btn" href="contact.html">Request Free Quote</a>
+                <a class="btn btn-outline" href="https://wa.me/2206240363?text=Hello%2C%20I%20would%20like%20to%20request%20a%20painting%20quote." target="_blank" rel="noopener noreferrer">Chat on WhatsApp</a>
+            </div>
+        </div>
+    </section>
+    </main>
 
     <!-- FOOTER -->
     <footer>
@@ -111,5 +196,7 @@
 
     <script src="js/language.js" defer></script>
     <script src="js/main.js" defer></script>
+    <script src="js/api.js" defer></script>
+    <script src="js/works.js" defer></script>
 </body>
 </html>
