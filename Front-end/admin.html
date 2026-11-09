@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow, noarchive">
+    <title>Private project uploads | MMD PAINTING</title>
+    <link rel="stylesheet" href="style.css">
+    <link rel="icon" type="image/png" href="images/mmd-deco-logo.png">
+</head>
+<body>
+    <div class="admin-language-control">
+        <label for="siteLanguage">Language</label>
+        <select id="siteLanguage" aria-label="Choose language">
+            <option value="en">English</option>
+            <option value="fr">Français</option>
+        </select>
+    </div>
+    <main>
+        <section class="page-hero">
+            <div class="container">
+                <h1>MMD PAINTING</h1>
+                <p>Private project photo uploads</p>
+            </div>
+        </section>
+
+        <section class="contact-section admin-section">
+            <div class="container">
+                <form id="adminKeyForm" class="contact-form admin-key-form">
+                    <h2>Admin access</h2>
+                    <p>Enter the admin key configured on the backend.</p>
+                    <div class="form-group">
+                        <label for="adminKey">Admin key</label>
+                        <input type="password" id="adminKey" autocomplete="current-password" required>
+                    </div>
+                    <button type="submit" class="btn">Unlock</button>
+                    <p id="keyStatus" class="comment-status" role="status" aria-live="polite"></p>
+                </form>
+
+                <div id="adminPanel" hidden>
+                    <div class="admin-heading">
+                        <h2>Upload project photos</h2>
+                        <button id="adminLogout" type="button" class="btn btn-secondary">Lock admin</button>
+                    </div>
+                    <form id="workForm" class="contact-form">
+                        <div class="form-group">
+                            <label for="workImage">Choose project photos (JPEG, PNG, or WebP; up to 6 MB each)</label>
+                            <input type="file" id="workImage" name="image" accept="image/jpeg,image/png,image/webp" multiple required>
+                            <p>Choose photos from your phone. Titles will use each photo's file name.</p>
+                        </div>
+                        <button type="submit" class="btn">Upload photos</button>
+                        <p id="workStatus" class="comment-status" role="status" aria-live="polite"></p>
+                    </form>
+
+                    <div class="admin-current-work">
+                        <h2>Published projects</h2>
+                        <div id="adminWorksList" class="admin-works-list"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <script src="js/language.js" defer></script>
+    <script src="js/api.js" defer></script>
+    <script src="js/admin.js" defer></script>
+</body>
+</html>

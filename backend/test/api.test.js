@@ -1,0 +1,214 @@
+import assert from "node:assert/strict";
+import { after, before, test } from "node:test";
+import { mkdtempSync, rmSync } from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { createApp } from "../server.js";
+
+const dataDirectory = mkdtempSync(path.join(os.tmpdir(), "mmd-deco-api-"));
+const uploadsDirectory = path.join(dataDirectory, "uploads");
+const adminApiKey = "test-admin-api-key-with-at-least-32-characters";
+const app = createApp({ dataDirectory, uploadsDirectory, adminApiKey });
+let server;
+let baseUrl;
+
+before(async () => {
+  await new Promise((resolve) => {
+    server = app.listen(0, "127.0.0.1", resolve);
+  });
+  const address = server.address();
+  assert(address && typeof address === "object");
+  baseUrl = `http://127.0.0.1:${address.port}`;
+});
+
+after(async () => {
+  await new Promise((resolve, reject) => {
+    server.close((error) => (error ? reject(error) : resolve()));
+  });
+  rmSync(dataDirectory, { recursive: true, force: true });
+});
+
+test("accepts and persists a valid quote request", async () => {
+  const response = await fetch(`${baseUrl}/api/quotes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: "Test Customer",
+      email: "test@example.com",
+      service: "interior",
+      phone: "",
+      message: "Two rooms",
+    }),
+  });
+
+  assert.equal(response.status, 201);
+  const saved = await response.json();
+  assert.equal(saved.message, "Quote request received.");
+  assert.ok(saved.quote.id);
+});
+
+test("rejects invalid quote input", async () => {
+  const response = await fetch(`${baseUrl}/api/quotes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: "Test Customer",
+      email: "not-an-email",
+      service: "interior",
+    }),
+  });
+
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /valid email/i);
+});
+
+test("accepts and lists comments newest first", async () => {
+  const postResponse = await fetch(`${baseUrl}/api/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: "Reviewer", comment: "Great work!" }),
+  });
+
+  assert.equal(postResponse.status, 201);
+  const saved = await postResponse.json();
+  assert.equal(saved.comment.comment, "Great work!");
+
+  const getResponse = await fetch(`${baseUrl}/api/comments`);
+  assert.equal(getResponse.status, 200);
+  const listed = await getResponse.json();
+  assert.equal(listed.comments.length, 1);
+  assert.equal(listed.comments[0].id, saved.comment.id);
+});
+
+test("rejects comment submissions without required fields", async () => {
+  const response = await fetch(`${baseUrl}/api/comments`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ name: "Reviewer", comment: "  " }),
+  });
+
+  assert.equal(response.status, 400);
+  assert.match((await response.json()).error, /comment is required/i);
+});
+
+test("allows configured local frontend origins and rejects unknown origins", async () => {
+  const allowedResponse = await fetch(`${baseUrl}/api/health`, {
+    headers: { Origin: "http://127.0.0.1:8000" },
+  });
+  assert.equal(
+    allowedResponse.headers.get("access-control-allow-origin"),
+    "http://127.0.0.1:8000",
+  );
+
+  const rejectedResponse = await fetch(`${baseUrl}/api/health`, {
+    headers: { Origin: "https://untrusted.example" },
+  });
+  assert.equal(rejectedResponse.status, 403);
+});
+
+test("supports the admin header in CORS preflight", async () => {
+  const response = await fetch(`${baseUrl}/api/works`, {
+    method: "OPTIONS",
+    headers: {
+      Origin: "http://127.0.0.1:8000",
+      "Access-Control-Request-Method": "POST",
+      "Access-Control-Request-Headers": "content-type,x-admin-key",
+    },
+  });
+
+  assert.equal(response.status, 204);
+  assert.match(
+    response.headers.get("access-control-allow-headers"),
+    /x-admin-key/i,
+  );
+});
+
+test("requires admin authorization to upload project photos", async () => {
+  const formData = new FormData();
+  formData.set("title", "Test project");
+  formData.set("image", new Blob([Buffer.from("not an image")], { type: "image/png" }), "test.png");
+
+  const response = await fetch(`${baseUrl}/api/works`, {
+    method: "POST",
+    body: formData,
+  });
+
+  assert.equal(response.status, 401);
+});
+
+test("validates the admin key through the protected verification endpoint", async () => {
+  const unauthorized = await fetch(`${baseUrl}/api/works/verify`, {
+    method: "POST",
+    headers: { "X-Admin-Key": "incorrect" },
+  });
+  assert.equal(unauthorized.status, 401);
+
+  const authorized = await fetch(`${baseUrl}/api/works/verify`, {
+    method: "POST",
+    headers: { "X-Admin-Key": adminApiKey },
+  });
+  assert.equal(authorized.status, 200);
+  assert.deepEqual(await authorized.json(), { authenticated: true });
+});
+
+test("publishes and deletes authorized recent work", async () => {
+  const formData = new FormData();
+  formData.set("title", "Test project");
+  formData.set("category", "Interior painting");
+  formData.set("description", "Freshly painted room");
+  formData.set(
+    "image",
+    new Blob(
+      [
+        Buffer.from(
+          "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+/r8cAAAAASUVORK5CYII=",
+          "base64",
+        ),
+      ],
+      { type: "image/png" },
+    ),
+    "project.png",
+  );
+
+  const postResponse = await fetch(`${baseUrl}/api/works`, {
+    method: "POST",
+    headers: { "X-Admin-Key": adminApiKey },
+    body: formData,
+  });
+  assert.equal(postResponse.status, 201);
+
+  const { work } = await postResponse.json();
+  assert.equal(work.title, "Test project");
+  assert.match(work.imageUrl, /^\/uploads\/[a-f0-9-]+\.png$/);
+
+  const imageResponse = await fetch(`${baseUrl}${work.imageUrl}`);
+  assert.equal(imageResponse.status, 200);
+
+  const deleteResponse = await fetch(`${baseUrl}/api/works/${work.id}`, {
+    method: "DELETE",
+    headers: { "X-Admin-Key": adminApiKey },
+  });
+  assert.equal(deleteResponse.status, 204);
+
+  const listResponse = await fetch(`${baseUrl}/api/works`);
+  assert.deepEqual((await listResponse.json()).works, []);
+  assert.equal((await fetch(`${baseUrl}${work.imageUrl}`)).status, 404);
+});
+
+test("rejects files that do not match their claimed image type", async () => {
+  const formData = new FormData();
+  formData.set("title", "Not an image");
+  formData.set(
+    "image",
+    new Blob(["not an image"], { type: "image/png" }),
+    "not-an-image.png",
+  );
+
+  const response = await fetch(`${baseUrl}/api/works`, {
+    method: "POST",
+    headers: { "X-Admin-Key": adminApiKey },
+    body: formData,
+  });
+
+  assert.equal(response.status, 400);
+});

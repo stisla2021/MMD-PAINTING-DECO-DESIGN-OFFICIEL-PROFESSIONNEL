@@ -1,0 +1,122 @@
+## Build the TypeScript
+
+The site scripts are in `js/` and compile to `js/*.js`, which the HTML pages load.
+Install TypeScript if needed, then run this from the `front-end` folder:
+
+```sh
+npx tsc
+```
+
+Re-run the compiler after editing the TypeScript files.
+
+## Website Languages
+
+The language selector lets visitors choose English or French on every page.
+The first visit follows the browser language when it is French; otherwise it
+starts in English. A visitor's selection is saved in that browser and carries
+across pages. Update translations in `js/language.ts`, then recompile.
+
+## How to Run Locally
+
+From the project root, install the backend dependencies once and start both
+servers:
+
+```powershell
+npm --prefix backend install
+npm run dev
+```
+
+Open `http://localhost:8000`. The frontend runs on port 8000 and the API runs on
+port 3000. Press `Ctrl+C` to stop both servers. To view the site on a phone on
+the same Wi-Fi, use the computer's LAN address and configure
+`FRONTEND_ORIGINS` in `backend/.env` as described in `../backend/README.md`.
+
+## Pages Overview
+
+| Page          | Purpose                              |
+|---------------|--------------------------------------|
+| Home          | Hero, about preview, services, and portfolio |
+| About         | Company story and values             |
+| Services      | Detailed list of painting services   |
+| Reviews       | View and submit customer reviews (`comments.html`) |
+| Contact       | Quote request form                   |
+| Admin         | Publish or delete recent-work photos (`admin.html`) |
+
+The brand logo is stored in `images/mmd-deco-logo.png`. The home-page Recent
+Projects gallery is loaded from the backend, and the admin page can publish
+photos that appear there.
+
+The full supplied design image is preserved as `images/mmd-deco-brand-poster.png`.
+
+## Backend API
+
+The Node.js API in the project-root `backend` folder is used for local
+development. See `../backend/README.md` for setup. Cloudflare deployment uses
+the Pages Functions in the project-root `functions` folder, with D1 for records
+and R2 for project images.
+
+### Current behavior
+- The contact form validates and submits name, email, phone, service, and
+  project details to `/api/quotes`
+- It shows a confirmation and resets on success, or reports an error if the
+  API is unavailable
+- Comments can be submitted to and read from `/api/comments`
+- Recent work is published from `admin.html`; set `ADMIN_API_KEY` in
+  `../backend/.env` and see the backend README for secure setup
+
+## Deploy to Cloudflare's free tier
+
+The site is configured for Cloudflare Pages, Pages Functions, D1, and R2. Static
+pages use the `pages.dev` address, and API requests use that same origin. Pages
+serves static files without invoking a Function; only `/api/*` and `/uploads/*`
+are routed through Functions. The current Wrangler release needs Node.js 22 or
+newer for Cloudflare deployment commands; local `npm run dev` still works with
+the Node.js 20 minimum documented for the Express backend.
+
+1. Create a Cloudflare account and sign in to Wrangler from the project root:
+
+   ```powershell
+   npm install
+   npx wrangler login
+   ```
+
+2. Create the D1 database and R2 bucket:
+
+   ```powershell
+   npm run cloudflare:db:create
+   npm run cloudflare:r2:create
+   ```
+
+   The D1 command writes its new ID into `../wrangler.jsonc`.
+
+3. Create a Pages project named `mmd-painting-deco-design` using direct upload
+   (no Git connection is required). Apply the database migration and set the
+   admin key as a Cloudflare secret:
+
+   ```powershell
+   npm run cloudflare:migrate
+   node -p "require('node:crypto').randomBytes(32).toString('base64url')"
+   npx wrangler pages secret put ADMIN_API_KEY --project-name mmd-painting-deco-design
+   ```
+
+   Copy the generated key into the secret prompt and keep a private copy for
+   unlocking `admin.html`. Never put it in this repository or frontend code.
+
+4. Deploy the site:
+
+   ```powershell
+   npm run cloudflare:deploy
+   ```
+
+   The site will be available at
+   `https://mmd-painting-deco-design.pages.dev`. The project is also set up for
+   local development with `npm run dev`, which continues to use the Express
+   backend on port 3000.
+
+Cloudflare has free allowances, not unlimited database and image storage. The
+current Free plan includes 100,000 Pages Function requests per day, D1 usage
+limits, and R2's monthly free storage and operation allowances; check the
+Cloudflare dashboard and current [Workers](https://developers.cloudflare.com/workers/platform/pricing/),
+[D1](https://developers.cloudflare.com/d1/platform/pricing/), and
+[R2](https://developers.cloudflare.com/r2/pricing/) pricing before enabling
+paid upgrades.
