@@ -300,6 +300,19 @@ header {
     transform: scale(1.04);
 }
 
+.hero-image.company-poster {
+    background-color: #03234b;
+}
+
+.hero-image.company-poster img {
+    height: 540px;
+    object-fit: contain;
+}
+
+.hero-image.company-poster:hover img {
+    transform: none;
+}
+
 /* ========== SECTIONS ========== */
 section {
     padding: 90px 0;
@@ -1033,6 +1046,10 @@ footer {
 
     .hero-image img {
         height: 340px;
+    }
+
+    .hero-image.company-poster img {
+        height: 460px;
     }
 
     .footer-grid {

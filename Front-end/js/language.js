@@ -12,6 +12,7 @@ const mmdFrenchTranslations = {
     "House painter at work": "Peintre en plein travail",
     "Painting crew": "Équipe de peintres",
     "Mustapha Jallow and a coworker working on a painting project": "Mustapha Jallow et un collègue travaillant sur un projet de peinture",
+    "MMD PAINTING poster featuring the team and company services": "Affiche de MMD PAINTING présentant l'équipe et les services de l'entreprise",
     "Choose language": "Choisir la langue",
     Language: "Langue",
     Home: "Accueil",
