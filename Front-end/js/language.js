@@ -91,6 +91,8 @@ const mmdFrenchTranslations = {
     "Complete residential and commercial painting solutions": "Des solutions complètes de peinture pour les particuliers et les professionnels",
     "Walls, ceilings, trim, doors, and baseboards. We carefully mask and protect your floors and furniture for a clean, professional finish.": "Murs, plafonds, moulures, portes et plinthes. Nous protégeons soigneusement vos sols et meubles pour une finition propre et professionnelle.",
     "Full exterior painting using weather-resistant paints that protect siding, trim, fascia, and doors while giving your home a fresh new look.": "Peinture extérieure complète avec des produits résistants aux intempéries pour protéger façades, moulures, bordures et portes, tout en donnant un nouvel aspect à votre maison.",
+    "Interior painting project in a home": "Projet de peinture intérieure dans une maison",
+    "Exterior painting project on a house": "Projet de peinture extérieure d'une maison",
     "Offices, retail stores, warehouses, and commercial buildings. We work efficiently with minimal disruption to your business.": "Bureaux, magasins, entrepôts et bâtiments professionnels. Nous organisons le travail pour limiter les perturbations de votre activité.",
     "Kitchen cabinets, bathroom vanities, doors, and detailed trim work for a high-end finished appearance.": "Meubles de cuisine, meubles-lavabos, portes et moulures pour une finition soignée.",
     "Surface Preparation": "Préparation des surfaces",
