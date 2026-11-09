@@ -372,6 +372,19 @@ section {
     background-color: #f1f3f5;
 }
 
+.team-profile {
+    margin: 70px 0;
+}
+
+.team-photo {
+    background-color: #f1f3f5;
+}
+
+.team-photo img {
+    object-fit: contain;
+    object-position: center;
+}
+
 .hero-image.owner-photo:hover img {
     transform: none;
 }
