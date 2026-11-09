@@ -363,6 +363,10 @@ section {
     object-fit: cover;
 }
 
+.owner-photo img {
+    object-position: center 25%;
+}
+
 .about-content h3 {
     font-size: 1.85rem;
     color: var(--primary);
