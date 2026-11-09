@@ -6,8 +6,12 @@ const keyStatus = document.getElementById("keyStatus");
 const workForm = document.getElementById("workForm");
 const workStatus = document.getElementById("workStatus");
 const adminWorksList = document.getElementById("adminWorksList");
+const adminQuotesList = document.getElementById("adminQuotesList");
+const quoteStatus = document.getElementById("quoteStatus");
 const logoutButton = document.getElementById("adminLogout");
+const refreshQuotesButton = document.getElementById("refreshQuotes");
 const adminApiUrl = window.mmdApiUrl("/api/works");
+const adminQuotesApiUrl = window.mmdApiUrl("/api/quotes");
 let currentAdminKey = "";
 if (!(keyForm instanceof HTMLFormElement)) {
     throw new Error('The admin page is missing the "#adminKeyForm" form.');
@@ -30,8 +34,17 @@ if (!(workStatus instanceof HTMLElement)) {
 if (!(adminWorksList instanceof HTMLElement)) {
     throw new Error('The admin page is missing the "#adminWorksList" list.');
 }
+if (!(adminQuotesList instanceof HTMLElement)) {
+    throw new Error('The admin page is missing the "#adminQuotesList" list.');
+}
+if (!(quoteStatus instanceof HTMLElement)) {
+    throw new Error('The admin page is missing the "#quoteStatus" status area.');
+}
 if (!(logoutButton instanceof HTMLButtonElement)) {
     throw new Error('The admin page is missing the "#adminLogout" button.');
+}
+if (!(refreshQuotesButton instanceof HTMLButtonElement)) {
+    throw new Error('The admin page is missing the "#refreshQuotes" button.');
 }
 const adminKeyForm = keyForm;
 const adminKeyInput = keyInput;
@@ -40,7 +53,10 @@ const adminKeyStatus = keyStatus;
 const adminWorkForm = workForm;
 const adminWorkStatus = workStatus;
 const adminWorksContainer = adminWorksList;
+const adminQuotesContainer = adminQuotesList;
+const adminQuoteStatus = quoteStatus;
 const adminLogoutButton = logoutButton;
+const adminRefreshQuotesButton = refreshQuotesButton;
 const workImage = adminWorkForm.querySelector("#workImage");
 const uploadButton = adminWorkForm.querySelector('button[type="submit"]');
 if (!workImage) {
@@ -64,6 +80,26 @@ function isAdminWorksResponse(value) {
     }
     const record = value;
     return Array.isArray(record.works) && record.works.every(isAdminWork);
+}
+function isAdminQuote(value) {
+    if (typeof value !== "object" || value === null) {
+        return false;
+    }
+    const record = value;
+    return (typeof record.id === "string" &&
+        typeof record.name === "string" &&
+        typeof record.email === "string" &&
+        typeof record.phone === "string" &&
+        typeof record.service === "string" &&
+        typeof record.message === "string" &&
+        typeof record.createdAt === "string");
+}
+function isAdminQuotesResponse(value) {
+    if (typeof value !== "object" || value === null) {
+        return false;
+    }
+    const record = value;
+    return Array.isArray(record.quotes) && record.quotes.every(isAdminQuote);
 }
 function getAdminKey() {
     return currentAdminKey;
@@ -168,6 +204,94 @@ async function loadAdminWorks() {
     }
     renderAdminWorks(result.works);
 }
+function renderAdminQuotes(quotes) {
+    adminQuotesContainer.replaceChildren();
+    if (quotes.length === 0) {
+        const empty = document.createElement("p");
+        window.mmdSetTranslatedText(empty, "No quote requests yet.");
+        adminQuotesContainer.append(empty);
+        return;
+    }
+    const serviceLabels = {
+        interior: "Interior House Painting",
+        exterior: "Exterior House Painting",
+        both: "Interior + Exterior",
+        cabinets: "Cabinet / Trim Painting",
+        commercial: "Commercial Painting",
+        other: "Other",
+    };
+    for (const quote of quotes) {
+        const item = document.createElement("article");
+        item.className = "admin-quote-item";
+        const heading = document.createElement("div");
+        heading.className = "admin-quote-heading";
+        const name = document.createElement("h3");
+        name.textContent = quote.name;
+        name.setAttribute("translate", "no");
+        const received = document.createElement("time");
+        received.dateTime = quote.createdAt;
+        const parsedDate = new Date(quote.createdAt);
+        const displayDate = Number.isNaN(parsedDate.getTime())
+            ? quote.createdAt
+            : parsedDate.toLocaleString();
+        window.mmdSetTranslatedText(received, "Received {date}", {
+            date: displayDate,
+        });
+        heading.append(name, received);
+        const email = document.createElement("p");
+        window.mmdSetTranslatedText(email, "Email: {email}", {
+            email: quote.email,
+        });
+        const phone = document.createElement("p");
+        if (quote.phone) {
+            window.mmdSetTranslatedText(phone, "Phone: {phone}", {
+                phone: quote.phone,
+            });
+        }
+        const service = document.createElement("p");
+        const serviceTitle = document.createElement("strong");
+        window.mmdSetTranslatedText(serviceTitle, "Service:");
+        const serviceLabel = serviceLabels[quote.service] ?? quote.service;
+        const serviceValue = document.createElement("span");
+        window.mmdSetTranslatedText(serviceValue, serviceLabel);
+        service.append(serviceTitle, " ", serviceValue);
+        item.append(heading, email);
+        if (quote.phone) {
+            item.append(phone);
+        }
+        item.append(service);
+        if (quote.message) {
+            const message = document.createElement("p");
+            message.className = "admin-quote-message";
+            window.mmdSetTranslatedText(message, "Project details: {message}", {
+                message: quote.message,
+            });
+            item.append(message);
+        }
+        adminQuotesContainer.append(item);
+    }
+}
+async function loadAdminQuotes() {
+    adminRefreshQuotesButton.disabled = true;
+    window.mmdSetTranslatedText(adminQuoteStatus, "Loading quote requests...");
+    try {
+        const result = await requestJson(adminQuotesApiUrl);
+        if (!isAdminQuotesResponse(result)) {
+            throw new Error("The server returned quote requests in an unexpected format.");
+        }
+        renderAdminQuotes(result.quotes);
+        window.mmdSetTranslatedText(adminQuoteStatus, "");
+    }
+    catch (error) {
+        console.error("Could not load quote requests:", error);
+        window.mmdSetTranslatedText(adminQuoteStatus, "Could not load quote requests. {message}", {
+            message: error instanceof Error ? error.message : "Please try again.",
+        });
+    }
+    finally {
+        adminRefreshQuotesButton.disabled = false;
+    }
+}
 adminKeyForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const key = adminKeyInput.value.trim();
@@ -181,6 +305,7 @@ adminKeyForm.addEventListener("submit", async (event) => {
         await requestJson(`${adminApiUrl}/verify`, { method: "POST" });
         await loadAdminWorks();
         setAuthenticated(true);
+        await loadAdminQuotes();
     }
     catch (error) {
         console.error("Admin access could not be verified:", error);
@@ -191,7 +316,12 @@ adminKeyForm.addEventListener("submit", async (event) => {
 adminLogoutButton.addEventListener("click", () => {
     currentAdminKey = "";
     adminKeyInput.value = "";
+    adminQuotesContainer.replaceChildren();
+    window.mmdSetTranslatedText(adminQuoteStatus, "");
     setAuthenticated(false);
+});
+adminRefreshQuotesButton.addEventListener("click", () => {
+    void loadAdminQuotes();
 });
 adminWorkForm.addEventListener("submit", async (event) => {
     event.preventDefault();

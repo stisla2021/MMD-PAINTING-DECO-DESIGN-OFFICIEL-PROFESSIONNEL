@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="robots" content="noindex, nofollow, noarchive">
-    <title>Private project uploads | MMD PAINTING</title>
+    <title>Admin dashboard | MMD PAINTING</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/png" href="images/mmd-deco-logo.png">
 </head>
@@ -19,8 +19,8 @@
     <main>
         <section class="page-hero">
             <div class="container">
-                <h1>MMD PAINTING</h1>
-                <p>Private project photo uploads</p>
+                <h1>Admin dashboard</h1>
+                <p>Manage quote requests and project photos</p>
             </div>
         </section>
 
@@ -39,10 +39,21 @@
 
                 <div id="adminPanel" hidden>
                     <div class="admin-heading">
-                        <h2>Upload project photos</h2>
+                        <h2>Admin dashboard</h2>
                         <button id="adminLogout" type="button" class="btn btn-secondary">Lock admin</button>
                     </div>
+
+                    <section class="admin-current-work" aria-labelledby="quoteRequestsHeading">
+                        <div class="admin-heading">
+                            <h2 id="quoteRequestsHeading">Quote requests</h2>
+                            <button id="refreshQuotes" type="button" class="btn btn-secondary">Refresh requests</button>
+                        </div>
+                        <p id="quoteStatus" class="comment-status" role="status" aria-live="polite"></p>
+                        <div id="adminQuotesList" class="admin-quotes-list"></div>
+                    </section>
+
                     <form id="workForm" class="contact-form">
+                        <h2>Upload project photos</h2>
                         <div class="form-group">
                             <label for="workImage">Choose project photos (JPEG, PNG, or WebP; up to 6 MB each)</label>
                             <input type="file" id="workImage" name="image" accept="image/jpeg,image/png,image/webp" multiple required>

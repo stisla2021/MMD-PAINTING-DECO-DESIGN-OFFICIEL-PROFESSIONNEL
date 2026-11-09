@@ -998,6 +998,42 @@ footer {
     color: var(--gray);
 }
 
+.admin-quotes-list {
+    display: grid;
+    gap: 16px;
+}
+
+.admin-quote-item {
+    display: grid;
+    gap: 8px;
+    padding: 18px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.admin-quote-heading {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 16px;
+}
+
+.admin-quote-item h3 {
+    color: var(--primary);
+    font-size: 1rem;
+}
+
+.admin-quote-item p,
+.admin-quote-item time {
+    color: var(--gray);
+}
+
+.admin-quote-item .admin-quote-message {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
 [hidden] {
     display: none !important;
 }

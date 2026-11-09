@@ -54,6 +54,11 @@ Required: `name`, valid `email`, and `service` (`interior`, `exterior`, `both`,
 
 Returns `201 Created` after saving the request in `data/quotes.json`.
 
+### `GET /api/quotes`
+
+Returns saved quote requests newest first. This endpoint requires the configured
+`ADMIN_API_KEY` in the `X-Admin-Key` header.
+
 ### `POST /api/comments`
 
 Requires a non-empty `name` (up to 100 characters) and `comment` (up to 2,000

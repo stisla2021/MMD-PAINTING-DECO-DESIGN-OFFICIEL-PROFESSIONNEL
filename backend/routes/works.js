@@ -1,8 +1,9 @@
-import { randomUUID, timingSafeEqual } from "node:crypto";
+import { randomUUID } from "node:crypto";
 import { readFileSync, unlinkSync } from "node:fs";
 import path from "node:path";
 import { Router } from "express";
 import multer from "multer";
+import { isAuthorized } from "../lib/adminAuth.js";
 
 const imageTypes = new Map([
   ["image/jpeg", ".jpg"],
@@ -10,19 +11,6 @@ const imageTypes = new Map([
   ["image/webp", ".webp"],
 ]);
 const maximumImageSize = 6 * 1024 * 1024;
-
-function isAuthorized(providedKey, configuredKey) {
-  if (!configuredKey || typeof providedKey !== "string") {
-    return false;
-  }
-
-  const provided = Buffer.from(providedKey);
-  const configured = Buffer.from(configuredKey);
-  return (
-    provided.length === configured.length &&
-    timingSafeEqual(provided, configured)
-  );
-}
 
 function removeUploadedFile(filePath) {
   if (!filePath) {

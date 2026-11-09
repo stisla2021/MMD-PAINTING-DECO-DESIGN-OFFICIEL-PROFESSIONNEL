@@ -1,5 +1,6 @@
 import { randomUUID } from "node:crypto";
 import { Router } from "express";
+import { isAuthorized } from "../lib/adminAuth.js";
 
 const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const allowedServices = new Set([
@@ -27,8 +28,24 @@ function readText(value, field, { required = false, maxLength }) {
   return { value: text };
 }
 
-export function createQuotesRouter(store) {
+export function createQuotesRouter({ store, adminApiKey }) {
   const router = Router();
+
+  router.get("/", (request, response) => {
+    if (!adminApiKey) {
+      return response.status(503).json({
+        error: "Work management is not configured. Set ADMIN_API_KEY on the server.",
+      });
+    }
+    if (!isAuthorized(request.get("x-admin-key"), adminApiKey)) {
+      return response.status(401).json({ error: "A valid admin key is required." });
+    }
+
+    const quotes = store
+      .readAll()
+      .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
+    return response.json({ quotes });
+  });
 
   router.post("/", (request, response) => {
     const body = request.body;

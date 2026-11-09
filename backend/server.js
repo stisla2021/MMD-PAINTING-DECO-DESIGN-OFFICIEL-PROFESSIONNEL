@@ -74,7 +74,10 @@ export function createApp({
   );
   app.use(
     "/api/quotes",
-    createQuotesRouter(createJsonStore(path.join(dataDirectory, "quotes.json"))),
+    createQuotesRouter({
+      store: createJsonStore(path.join(dataDirectory, "quotes.json")),
+      adminApiKey,
+    }),
   );
   app.use(
     "/api/comments",

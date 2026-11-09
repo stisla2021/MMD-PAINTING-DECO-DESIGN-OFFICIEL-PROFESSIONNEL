@@ -156,8 +156,33 @@ function hasImageSignature(bytes, mimeType) {
 }
 
 async function getQuotes(request, env) {
+  if (request.method === "GET") {
+    const authorizationError = await authorize(request, env);
+    if (authorizationError) {
+      return authorizationError;
+    }
+
+    const { results } = await env.DB.prepare(
+      `SELECT id, name, email, phone, service, message, created_at
+       FROM quotes
+       ORDER BY created_at DESC, id DESC`,
+    ).all();
+    return jsonResponse({
+      quotes: results.map(
+        ({ id, name, email, phone, service, message, created_at }) => ({
+          id,
+          name,
+          email,
+          phone,
+          service,
+          message,
+          createdAt: created_at,
+        }),
+      ),
+    });
+  }
   if (request.method !== "POST") {
-    return methodNotAllowed("POST");
+    return methodNotAllowed("GET, POST");
   }
   const parsed = await readJson(request);
   if (parsed.error) {

@@ -35,12 +35,12 @@ the same Wi-Fi, use the computer's LAN address and configure
 
 | Page          | Purpose                              |
 |---------------|--------------------------------------|
-| Home          | Hero, about preview, services, and portfolio |
+| Home          | Hero and calls to action                 |
 | About         | Company story and values             |
 | Services      | Detailed list of painting services   |
 | Reviews       | View and submit customer reviews (`comments.html`) |
 | Contact       | Quote request form                   |
-| Admin         | Publish or delete recent-work photos (`admin.html`) |
+| Admin         | View quote requests and manage project photos (`admin.html`) |
 
 The brand logo is stored in `images/mmd-deco-logo.png`. The home-page Recent
 Projects gallery is loaded from the backend, and the admin page can publish
@@ -61,8 +61,9 @@ and R2 for project images.
 - It shows a confirmation and resets on success, or reports an error if the
   API is unavailable
 - Comments can be submitted to and read from `/api/comments`
-- Recent work is published from `admin.html`; set `ADMIN_API_KEY` in
-  `../backend/.env` and see the backend README for secure setup
+- The protected admin page lists quote requests and manages recent-work photos;
+  enter the `ADMIN_API_KEY` configured in `../backend/.env` for local use or
+  Cloudflare Pages secrets for production
 
 ## Deploy to Cloudflare's free tier
 

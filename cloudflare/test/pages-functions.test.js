@@ -89,6 +89,8 @@ function createEnvironment() {
           const sql = query.replace(/\s+/g, " ").trim();
           const records = sql.startsWith("SELECT id, name, comment")
             ? tables.comments
+            : sql.startsWith("SELECT id, name, email, phone, service, message")
+              ? tables.quotes
             : sql.startsWith("SELECT id, title, category")
               ? tables.works
               : null;
@@ -189,6 +191,46 @@ test("accepts valid quotes and serves the health endpoint", async () => {
   assert.equal(response.status, 201);
   assert.equal(env.tables.quotes.length, 1);
   assert.equal(env.tables.quotes[0].email, "test@example.com");
+});
+
+test("protects the quote inbox and returns saved requests to admins", async () => {
+  const env = createEnvironment();
+  env.tables.quotes.push({
+    id: "quote-1",
+    name: "Customer",
+    email: "customer@example.com",
+    phone: "+220 1234567",
+    service: "interior",
+    message: "Paint two rooms.",
+    created_at: "2026-11-09T10:00:00.000Z",
+  });
+
+  const unauthorized = await onRequest({
+    request: makeRequest("/api/quotes"),
+    env,
+  });
+  assert.equal(unauthorized.status, 401);
+
+  const authorized = await onRequest({
+    request: makeRequest("/api/quotes", {
+      headers: { "X-Admin-Key": adminApiKey },
+    }),
+    env,
+  });
+  assert.equal(authorized.status, 200);
+  assert.deepEqual(await authorized.json(), {
+    quotes: [
+      {
+        id: "quote-1",
+        name: "Customer",
+        email: "customer@example.com",
+        phone: "+220 1234567",
+        service: "interior",
+        message: "Paint two rooms.",
+        createdAt: "2026-11-09T10:00:00.000Z",
+      },
+    ],
+  });
 });
 
 test("accepts and lists customer comments", async () => {

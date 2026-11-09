@@ -47,6 +47,35 @@ test("accepts and persists a valid quote request", async () => {
   assert.ok(saved.quote.id);
 });
 
+test("lists quote requests only for an authorized admin", async () => {
+  const postResponse = await fetch(`${baseUrl}/api/quotes`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      name: "Inbox Customer",
+      email: "inbox@example.com",
+      service: "exterior",
+      phone: "+220 1234567",
+      message: "Paint the outside walls.",
+    }),
+  });
+  assert.equal(postResponse.status, 201);
+
+  const unauthorized = await fetch(`${baseUrl}/api/quotes`);
+  assert.equal(unauthorized.status, 401);
+
+  const authorized = await fetch(`${baseUrl}/api/quotes`, {
+    headers: { "X-Admin-Key": adminApiKey },
+  });
+  assert.equal(authorized.status, 200);
+  const listed = await authorized.json();
+  const savedQuote = listed.quotes.find(
+    (quote) => quote.email === "inbox@example.com",
+  );
+  assert.ok(savedQuote);
+  assert.equal(savedQuote.service, "exterior");
+});
+
 test("rejects invalid quote input", async () => {
   const response = await fetch(`${baseUrl}/api/quotes`, {
     method: "POST",

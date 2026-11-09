@@ -11,6 +11,20 @@ interface AdminWorksResponse {
   works: AdminWork[];
 }
 
+interface AdminQuote {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  service: string;
+  message: string;
+  createdAt: string;
+}
+
+interface AdminQuotesResponse {
+  quotes: AdminQuote[];
+}
+
 const keyForm = document.getElementById("adminKeyForm");
 const keyInput = document.getElementById("adminKey");
 const adminPanel = document.getElementById("adminPanel");
@@ -18,8 +32,12 @@ const keyStatus = document.getElementById("keyStatus");
 const workForm = document.getElementById("workForm");
 const workStatus = document.getElementById("workStatus");
 const adminWorksList = document.getElementById("adminWorksList");
+const adminQuotesList = document.getElementById("adminQuotesList");
+const quoteStatus = document.getElementById("quoteStatus");
 const logoutButton = document.getElementById("adminLogout");
+const refreshQuotesButton = document.getElementById("refreshQuotes");
 const adminApiUrl = window.mmdApiUrl("/api/works");
+const adminQuotesApiUrl = window.mmdApiUrl("/api/quotes");
 let currentAdminKey = "";
 
 if (!(keyForm instanceof HTMLFormElement)) {
@@ -43,8 +61,17 @@ if (!(workStatus instanceof HTMLElement)) {
 if (!(adminWorksList instanceof HTMLElement)) {
   throw new Error('The admin page is missing the "#adminWorksList" list.');
 }
+if (!(adminQuotesList instanceof HTMLElement)) {
+  throw new Error('The admin page is missing the "#adminQuotesList" list.');
+}
+if (!(quoteStatus instanceof HTMLElement)) {
+  throw new Error('The admin page is missing the "#quoteStatus" status area.');
+}
 if (!(logoutButton instanceof HTMLButtonElement)) {
   throw new Error('The admin page is missing the "#adminLogout" button.');
+}
+if (!(refreshQuotesButton instanceof HTMLButtonElement)) {
+  throw new Error('The admin page is missing the "#refreshQuotes" button.');
 }
 
 const adminKeyForm: HTMLFormElement = keyForm;
@@ -54,7 +81,10 @@ const adminKeyStatus: HTMLElement = keyStatus;
 const adminWorkForm: HTMLFormElement = workForm;
 const adminWorkStatus: HTMLElement = workStatus;
 const adminWorksContainer: HTMLElement = adminWorksList;
+const adminQuotesContainer: HTMLElement = adminQuotesList;
+const adminQuoteStatus: HTMLElement = quoteStatus;
 const adminLogoutButton: HTMLButtonElement = logoutButton;
+const adminRefreshQuotesButton: HTMLButtonElement = refreshQuotesButton;
 
 const workImage = adminWorkForm.querySelector<HTMLInputElement>("#workImage");
 const uploadButton = adminWorkForm.querySelector<HTMLButtonElement>(
@@ -86,6 +116,30 @@ function isAdminWorksResponse(value: unknown): value is AdminWorksResponse {
   }
   const record = value as Record<string, unknown>;
   return Array.isArray(record.works) && record.works.every(isAdminWork);
+}
+
+function isAdminQuote(value: unknown): value is AdminQuote {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.id === "string" &&
+    typeof record.name === "string" &&
+    typeof record.email === "string" &&
+    typeof record.phone === "string" &&
+    typeof record.service === "string" &&
+    typeof record.message === "string" &&
+    typeof record.createdAt === "string"
+  );
+}
+
+function isAdminQuotesResponse(value: unknown): value is AdminQuotesResponse {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return Array.isArray(record.quotes) && record.quotes.every(isAdminQuote);
 }
 
 function getAdminKey(): string {
@@ -216,6 +270,105 @@ async function loadAdminWorks(): Promise<void> {
   renderAdminWorks(result.works);
 }
 
+function renderAdminQuotes(quotes: AdminQuote[]): void {
+  adminQuotesContainer.replaceChildren();
+
+  if (quotes.length === 0) {
+    const empty = document.createElement("p");
+    window.mmdSetTranslatedText(empty, "No quote requests yet.");
+    adminQuotesContainer.append(empty);
+    return;
+  }
+
+  const serviceLabels: Record<string, string> = {
+    interior: "Interior House Painting",
+    exterior: "Exterior House Painting",
+    both: "Interior + Exterior",
+    cabinets: "Cabinet / Trim Painting",
+    commercial: "Commercial Painting",
+    other: "Other",
+  };
+
+  for (const quote of quotes) {
+    const item = document.createElement("article");
+    item.className = "admin-quote-item";
+
+    const heading = document.createElement("div");
+    heading.className = "admin-quote-heading";
+    const name = document.createElement("h3");
+    name.textContent = quote.name;
+    name.setAttribute("translate", "no");
+
+    const received = document.createElement("time");
+    received.dateTime = quote.createdAt;
+    const parsedDate = new Date(quote.createdAt);
+    const displayDate = Number.isNaN(parsedDate.getTime())
+      ? quote.createdAt
+      : parsedDate.toLocaleString();
+    window.mmdSetTranslatedText(received, "Received {date}", {
+      date: displayDate,
+    });
+    heading.append(name, received);
+
+    const email = document.createElement("p");
+    window.mmdSetTranslatedText(email, "Email: {email}", {
+      email: quote.email,
+    });
+    const phone = document.createElement("p");
+    if (quote.phone) {
+      window.mmdSetTranslatedText(phone, "Phone: {phone}", {
+        phone: quote.phone,
+      });
+    }
+
+    const service = document.createElement("p");
+    const serviceTitle = document.createElement("strong");
+    window.mmdSetTranslatedText(serviceTitle, "Service:");
+    const serviceLabel = serviceLabels[quote.service] ?? quote.service;
+    const serviceValue = document.createElement("span");
+    window.mmdSetTranslatedText(serviceValue, serviceLabel);
+    service.append(serviceTitle, " ", serviceValue);
+
+    item.append(heading, email);
+    if (quote.phone) {
+      item.append(phone);
+    }
+    item.append(service);
+
+    if (quote.message) {
+      const message = document.createElement("p");
+      message.className = "admin-quote-message";
+      window.mmdSetTranslatedText(message, "Project details: {message}", {
+        message: quote.message,
+      });
+      item.append(message);
+    }
+
+    adminQuotesContainer.append(item);
+  }
+}
+
+async function loadAdminQuotes(): Promise<void> {
+  adminRefreshQuotesButton.disabled = true;
+  window.mmdSetTranslatedText(adminQuoteStatus, "Loading quote requests...");
+
+  try {
+    const result = await requestJson(adminQuotesApiUrl);
+    if (!isAdminQuotesResponse(result)) {
+      throw new Error("The server returned quote requests in an unexpected format.");
+    }
+    renderAdminQuotes(result.quotes);
+    window.mmdSetTranslatedText(adminQuoteStatus, "");
+  } catch (error) {
+    console.error("Could not load quote requests:", error);
+    window.mmdSetTranslatedText(adminQuoteStatus, "Could not load quote requests. {message}", {
+      message: error instanceof Error ? error.message : "Please try again.",
+    });
+  } finally {
+    adminRefreshQuotesButton.disabled = false;
+  }
+}
+
 adminKeyForm.addEventListener("submit", async (event: SubmitEvent) => {
   event.preventDefault();
   const key = adminKeyInput.value.trim();
@@ -234,6 +387,7 @@ adminKeyForm.addEventListener("submit", async (event: SubmitEvent) => {
     await requestJson(`${adminApiUrl}/verify`, { method: "POST" });
     await loadAdminWorks();
     setAuthenticated(true);
+    await loadAdminQuotes();
   } catch (error) {
     console.error("Admin access could not be verified:", error);
     currentAdminKey = "";
@@ -247,7 +401,13 @@ adminKeyForm.addEventListener("submit", async (event: SubmitEvent) => {
 adminLogoutButton.addEventListener("click", () => {
   currentAdminKey = "";
   adminKeyInput.value = "";
+  adminQuotesContainer.replaceChildren();
+  window.mmdSetTranslatedText(adminQuoteStatus, "");
   setAuthenticated(false);
+});
+
+adminRefreshQuotesButton.addEventListener("click", () => {
+  void loadAdminQuotes();
 });
 
 adminWorkForm.addEventListener("submit", async (event: SubmitEvent) => {

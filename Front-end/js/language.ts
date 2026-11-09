@@ -20,14 +20,18 @@ const mmdFrenchTranslations: Record<string, string> = {
   "Customer Reviews | MMD DECO Design Official":
     "Avis clients | MMD DECO Design Official",
   "Contact | MMD DECO Design Official": "Contact | MMD DECO Design Official",
-  "Private project uploads | MMD PAINTING":
-    "Publications privées de projets | MMD PAINTING",
+  "Admin dashboard | MMD PAINTING":
+    "Tableau de bord administrateur | MMD PAINTING",
   "Learn about MMD PAINTING and our painting, decoration, and design services for homes and businesses.":
     "Découvrez MMD PAINTING et nos services de peinture, décoration et design pour les particuliers et les professionnels.",
   "MMD DECO Design Official logo": "Logo MMD DECO Design Official",
   "MMD PAINTING logo": "Logo MMD PAINTING",
   "House painter at work": "Peintre en plein travail",
   "Painting crew": "Équipe de peintres",
+  "Mustapha Jallow and a coworker working on a painting project":
+    "Mustapha Jallow et un collègue travaillant sur un projet de peinture",
+  "MMD PAINTING poster featuring the team and company services":
+    "Affiche de MMD PAINTING présentant l'équipe et les services de l'entreprise",
   "Choose language": "Choisir la langue",
   Language: "Langue",
   Home: "Accueil",
@@ -55,8 +59,18 @@ const mmdFrenchTranslations: Record<string, string> = {
   "Get Free Quote": "Obtenir un devis gratuit",
   "See Our Work": "Voir nos réalisations",
   "About MMD DECO Design Official": "À propos de MMD DECO Design Official",
+  "Our Work | MMD PAINTING": "Nos réalisations | MMD PAINTING",
   "Painting and decoration shaped by a lifelong passion for the craft":
     "La peinture et la décoration, portées par une passion de toujours pour ce métier",
+  "Meet Mustapha Jallow": "Rencontrez Mustapha Jallow",
+  "Mustapha Jallow is the owner of MMD PAINTING, an active company where 12 youth members, including men and women, work together on painting, decoration, and design projects.":
+    "Mustapha Jallow est le propriétaire de MMD PAINTING, une entreprise active où 12 jeunes, hommes et femmes, travaillent ensemble sur des projets de peinture, de décoration et de design.",
+  "The team serves homes and businesses throughout The Gambia and Senegal, from interior and exterior painting to commercial spaces and decorative details.":
+    "L'équipe intervient dans les maisons et les entreprises en Gambie et au Sénégal, pour la peinture intérieure et extérieure, les espaces commerciaux et les finitions décoratives.",
+  "Mustapha Jallow is the owner of MMD PAINTING, leading its painting, decoration, and design services for homes and businesses.":
+    "Mustapha Jallow est le propriétaire de MMD PAINTING, où il dirige les services de peinture, décoration et design pour les particuliers et les professionnels.",
+  "The photo shows him working on a project.":
+    "La photo le montre en train de travailler sur un projet.",
   "A Passion for Painting Since Childhood": "La passion de la peinture depuis l'enfance",
   "The owner began painting as a child, growing a lifelong passion for transforming spaces through color, care, and design.":
     "Le propriétaire a commencé à peindre enfant et a développé une passion durable pour transformer les espaces par la couleur, le soin et le design.",
@@ -87,9 +101,24 @@ const mmdFrenchTranslations: Record<string, string> = {
   "Recent projects are temporarily unavailable. Please check back soon.":
     "Les projets récents sont temporairement indisponibles. Revenez bientôt.",
   "About MMD PAINTING": "À propos de MMD PAINTING",
+  "Mustapha Jallow is the owner of MMD PAINTING. He is shown here working on a painting project.":
+    "Mustapha Jallow est le propriétaire de MMD PAINTING. On le voit ici travailler sur un projet de peinture.",
+  "Our Youth Team of 12": "Notre équipe de 12 jeunes",
+  "MMD PAINTING team working together":
+    "L'équipe de MMD PAINTING travaille ensemble",
+  "MMD PAINTING is an active company with 12 youth members, including men and women, working together on painting, decoration, and design projects.":
+    "MMD PAINTING est une entreprise active composée de 12 jeunes, hommes et femmes, qui travaillent ensemble sur des projets de peinture, de décoration et de design.",
+  "Our services include interior and exterior painting, commercial spaces, cabinet and trim painting, surface preparation, color consultation, decoration, and design for homes and businesses.":
+    "Nos services comprennent la peinture intérieure et extérieure, les espaces commerciaux, la peinture de meubles et de moulures, la préparation des surfaces, le conseil en couleurs, la décoration et le design pour les particuliers et les entreprises.",
+  "Available for projects across The Gambia and Senegal, our team coordinates from understanding each customer's needs and preparing the space to applying the finish and reviewing the completed work.":
+    "Disponible pour des projets en Gambie et au Sénégal, notre équipe se coordonne pour comprendre les besoins de chaque client, préparer l'espace, appliquer les finitions et examiner le travail réalisé.",
+  "The Gambia": "La Gambie",
+  "Senegal": "Sénégal",
   "Painting, decoration, and design": "Peinture, décoration et design",
   "MMD PAINTING provides painting, decoration, and design services for homes and businesses.":
     "MMD PAINTING propose des services de peinture, décoration et design pour les particuliers et les professionnels.",
+  "Available for painting projects throughout The Gambia and Senegal.":
+    "Disponible pour vos travaux de peinture partout en Gambie et au Sénégal.",
   "Projects can include interior and exterior painting, commercial spaces, and decorative details. We work with each customer to understand the space, the desired finish, and the project scope.":
     "Les projets peuvent comprendre la peinture intérieure ou extérieure, les espaces commerciaux et les finitions décoratives. Nous échangeons avec chaque client pour comprendre l'espace, le rendu souhaité et l'étendue des travaux.",
   "Every project is different. Contact us to talk through what you have in mind and the next steps.":
@@ -97,17 +126,44 @@ const mmdFrenchTranslations: Record<string, string> = {
   "Explore Services": "Découvrir les services",
   "Contact Us": "Nous contacter",
   "How We Work": "Notre façon de travailler",
+  "We listen, agree on the details, work as a team, and keep customers informed from preparation through the final review.":
+    "Nous écoutons, convenons des détails, travaillons en équipe et tenons les clients informés de la préparation jusqu'à la vérification finale.",
   "A straightforward approach to each painting and design project.":
     "Une approche claire pour chaque projet de peinture et de design.",
   "Understand the project": "Comprendre le projet",
+  "We discuss your space, surfaces, goals, and priorities to clarify the work you need.":
+    "Nous échangeons sur votre espace, les surfaces, vos objectifs et vos priorités afin de clarifier les travaux nécessaires.",
   "We start by discussing your space, goals, and the work you need done.":
     "Nous commençons par échanger sur votre espace, vos objectifs et les travaux souhaités.",
   "Agree on the details": "Définir les détails",
+  "We confirm the project scope, preparation, desired finish, and schedule before work begins. Any added work is discussed first.":
+    "Nous confirmons l'étendue du projet, la préparation, le rendu souhaité et le calendrier avant le début des travaux. Tout travail supplémentaire est d'abord discuté.",
   "We clarify the project scope and finish before work gets underway.":
     "Nous précisons l'étendue du projet et le rendu attendu avant le début des travaux.",
   "Keep in touch": "Rester en contact",
+  "We share progress updates, discuss changes, and welcome your feedback when the work is complete.":
+    "Nous partageons l'avancement, discutons des changements et accueillons vos commentaires à la fin des travaux.",
   "We aim to keep communication clear as the project moves forward.":
     "Nous veillons à communiquer clairement tout au long du projet.",
+  "Customer Service & Work Standards Policy":
+    "Politique de service à la clientèle et normes de travail",
+  "These standards guide how our youth team works with customers and cares for each project.":
+    "Ces normes guident la manière dont notre équipe de jeunes travaille avec les clients et prend soin de chaque projet.",
+  "Clear agreements": "Des accords clairs",
+  "We discuss the project scope, desired finish, and agreed schedule before work begins. We ask for approval before taking on work outside the agreed scope.":
+    "Nous discutons de l'étendue du projet, du rendu souhaité et du calendrier convenu avant le début des travaux. Nous demandons l'accord du client avant d'effectuer des travaux non prévus.",
+  "Care for your property": "Prendre soin de votre propriété",
+  "We take care to protect nearby floors, furniture, and belongings during painting and keep the work area orderly.":
+    "Nous protégeons les sols, les meubles et les biens à proximité pendant les travaux de peinture et gardons l'espace de travail en ordre.",
+  "Respectful communication": "Une communication respectueuse",
+  "We listen to your priorities, answer questions clearly, and share updates about progress or changes.":
+    "Nous écoutons vos priorités, répondons clairement à vos questions et vous informons de l'avancement ou des changements.",
+  "Teamwork and safe work": "Travail d'équipe et sécurité",
+  "Our team coordinates tasks, follows safe work practices, uses suitable protective equipment, and keeps tools and work areas organized.":
+    "Notre équipe coordonne les tâches, applique des pratiques de travail sûres, utilise des équipements de protection adaptés et range les outils et les espaces de travail.",
+  "Review and feedback": "Vérification et commentaires",
+  "We invite you to review the completed work and share feedback or concerns so we can discuss next steps together.":
+    "Nous vous invitons à examiner le travail terminé et à partager vos commentaires ou préoccupations afin de convenir ensemble des prochaines étapes.",
   "Professional house painting for every part of your home or business":
     "Des services de peinture professionnels pour votre maison ou votre entreprise",
   "What We Offer": "Nos prestations",
@@ -117,6 +173,10 @@ const mmdFrenchTranslations: Record<string, string> = {
     "Murs, plafonds, moulures, portes et plinthes. Nous protégeons soigneusement vos sols et meubles pour une finition propre et professionnelle.",
   "Full exterior painting using weather-resistant paints that protect siding, trim, fascia, and doors while giving your home a fresh new look.":
     "Peinture extérieure complète avec des produits résistants aux intempéries pour protéger façades, moulures, bordures et portes, tout en donnant un nouvel aspect à votre maison.",
+  "Interior painting project in a home":
+    "Projet de peinture intérieure dans une maison",
+  "Exterior painting project on a house":
+    "Projet de peinture extérieure d'une maison",
   "Offices, retail stores, warehouses, and commercial buildings. We work efficiently with minimal disruption to your business.":
     "Bureaux, magasins, entrepôts et bâtiments professionnels. Nous organisons le travail pour limiter les perturbations de votre activité.",
   "Kitchen cabinets, bathroom vanities, doors, and detailed trim work for a high-end finished appearance.":
@@ -204,12 +264,27 @@ const mmdFrenchTranslations: Record<string, string> = {
   "Project Details": "Détails du projet",
   "Number of rooms, approximate size, preferred start date, or any special requests...":
     "Nombre de pièces, dimensions approximatives, date de début souhaitée ou demandes particulières...",
-  "Private project photo uploads": "Publication privée de photos de projets",
+  "Manage quote requests and project photos":
+    "Gérez les demandes de devis et les photos de projets",
   "Admin access": "Accès administrateur",
+  "Admin dashboard": "Tableau de bord administrateur",
   "Enter the admin key configured on the backend.":
     "Saisissez la clé administrateur configurée sur le serveur.",
   "Admin key": "Clé administrateur",
   Unlock: "Déverrouiller",
+  "Quote requests": "Demandes de devis",
+  "Refresh requests": "Actualiser les demandes",
+  "Loading quote requests...": "Chargement des demandes de devis...",
+  "Could not load quote requests. {message}":
+    "Impossible de charger les demandes de devis. {message}",
+  "The server returned quote requests in an unexpected format.":
+    "Le serveur a renvoyé les demandes de devis dans un format inattendu.",
+  "No quote requests yet.": "Aucune demande de devis pour le moment.",
+  "Received {date}": "Reçue le {date}",
+  "Email: {email}": "E-mail : {email}",
+  "Phone: {phone}": "Téléphone : {phone}",
+  "Service:": "Service :",
+  "Project details: {message}": "Détails du projet : {message}",
   "Upload project photos": "Publier des photos de projets",
   "Lock admin": "Verrouiller l'administration",
   "Choose project photos (JPEG, PNG, or WebP; up to 6 MB each)":
