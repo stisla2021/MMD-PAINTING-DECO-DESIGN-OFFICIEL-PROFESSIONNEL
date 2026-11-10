@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { onRequest } from "../../functions/api/[[path]].js";
+import { onRequest as serveGoogleVerificationFile } from "../../functions/google16df5d513870464f.html.js";
 import { onRequest as serveUpload } from "../../functions/uploads/[key].js";
 
 const adminApiKey = "test-admin-api-key-with-at-least-32-characters";
@@ -166,6 +167,28 @@ function pngUpload() {
   );
   return form;
 }
+
+test("serves the Google verification token directly at its required URL", async () => {
+  const response = await serveGoogleVerificationFile({
+    request: new Request(
+      "https://example.com/google16df5d513870464f.html",
+    ),
+  });
+
+  assert.equal(response.status, 200);
+  assert.equal(
+    await response.text(),
+    "google-site-verification: google16df5d513870464f.html\n",
+  );
+  assert.equal(response.headers.get("content-type"), "text/html; charset=utf-8");
+
+  const unsupportedMethod = await serveGoogleVerificationFile({
+    request: new Request("https://example.com/google16df5d513870464f.html", {
+      method: "POST",
+    }),
+  });
+  assert.equal(unsupportedMethod.status, 405);
+});
 
 test("accepts valid quotes and serves the health endpoint", async () => {
   const env = createEnvironment();

@@ -1,5 +1,5 @@
 {
   "version": 1,
-  "include": ["/api/*", "/uploads/*"],
+  "include": ["/api/*", "/uploads/*", "/google16df5d513870464f.html"],
   "exclude": []
 }
