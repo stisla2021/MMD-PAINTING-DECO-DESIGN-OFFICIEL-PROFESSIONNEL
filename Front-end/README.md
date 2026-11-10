@@ -42,9 +42,12 @@ the same Wi-Fi, use the computer's LAN address and configure
 | Contact       | Quote request form                   |
 | Admin         | View quote requests and manage project photos (`admin.html`) |
 
-The brand logo is stored in `images/mmd-deco-logo.png`. The home-page Recent
+The header and footer logo is `images/mmd-deco-logo.svg`, with
+`images/favicon.svg` used as the site icon. The home-page Recent
 Projects gallery is loaded from the backend, and the admin page can publish
 photos that appear there.
+Social-profile icons in the public-page footers link to WhatsApp, Facebook,
+Instagram, and TikTok. Update those footer links if a profile changes.
 
 The full supplied design image is preserved as `images/mmd-deco-brand-poster.png`.
 
@@ -57,7 +60,9 @@ and R2 for project images.
 
 ### Current behavior
 - The contact form validates and submits name, email, phone, service, and
-  project details to `/api/quotes`
+  project details to `/api/quotes`. If the API is unavailable, the form offers
+  a WhatsApp link with the entered details prefilled. The WhatsApp buttons use
+  the owner contact QR link `https://wa.me/qr/VEF7XDQ7XXDAD1`.
 - New quote requests trigger a generic email alert through Resend when
   `RESEND_API_KEY` and `QUOTE_ALERT_FROM` are configured. The alert links to the
   protected admin inbox and does not include customer details. Requests are
@@ -65,7 +70,11 @@ and R2 for project images.
   WhatsApp fallback.
 - The form shows a confirmation and resets after a saved request, or reports an
   error if the API is unavailable
-- Comments can be submitted to and read from `/api/comments`
+- Existing online comments are read from `/api/comments`. New reviews include a
+  name, optional location, 1-5 star rating, and comment, and are saved in that
+  visitor's browser with localStorage. Browser-saved reviews are not visible to
+  other visitors; online submissions require adding a review API that supports
+  rating and location.
 - The protected admin page lists quote requests and manages recent-work photos;
   enter the `ADMIN_API_KEY` configured in `../backend/.env` for local use or
   Cloudflare Pages secrets for production

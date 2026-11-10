@@ -108,25 +108,15 @@ header {
 }
 
 .logo {
-    font-weight: 800;
-    color: var(--primary);
     display: flex;
     align-items: center;
-    gap: 12px;
-    letter-spacing: -0.5px;
-}
-
-.logo img {
-    width: 58px;
-    height: 58px;
-    object-fit: contain;
     flex-shrink: 0;
 }
 
-.logo .brand-name {
-    color: var(--primary);
-    font-size: clamp(0.9rem, 1.5vw, 1.25rem);
-    line-height: 1.2;
+.logo img {
+    width: 230px;
+    height: 60px;
+    object-fit: contain;
 }
 
 .nav-links {
@@ -786,6 +776,18 @@ section {
     font-weight: 700;
 }
 
+.testimonial-card .review-rating {
+    color: #e87916;
+    font-size: 1.15rem;
+    letter-spacing: 0.08em;
+    margin-bottom: 12px;
+}
+
+.testimonial-card .review-location {
+    color: var(--gray);
+    font-size: 0.9rem;
+}
+
 .comments-empty,
 .comment-status {
     color: var(--gray);
@@ -804,6 +806,75 @@ section {
 
 .review-form-wrap .contact-form {
     margin: 0 auto;
+}
+
+.rating-field {
+    border: 0;
+    padding: 0;
+}
+
+.rating-field legend {
+    margin-bottom: 7px;
+    font-weight: 600;
+    color: var(--primary);
+    font-size: 0.95rem;
+}
+
+.rating-options {
+    display: flex;
+    flex-direction: row-reverse;
+    justify-content: flex-end;
+    width: fit-content;
+}
+
+.rating-field .rating-options input[type="radio"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.rating-field .rating-options label {
+    color: #cbd5e1;
+    cursor: pointer;
+    font-size: 2rem;
+    line-height: 1;
+    margin: 0;
+    padding: 0 3px;
+}
+
+.rating-options input:checked + label,
+.rating-options input:checked + label ~ input + label,
+.rating-options label:hover,
+.rating-options label:hover ~ input + label {
+    color: #e87916;
+}
+
+.rating-options input:focus-visible + label {
+    outline: 2px solid var(--accent);
+    outline-offset: 3px;
+    border-radius: 3px;
+}
+
+.form-status {
+    margin: 18px 0 0;
+}
+
+.form-status a {
+    display: inline-block;
+    margin-top: 6px;
+    font-weight: 700;
+    color: var(--primary);
+    text-decoration: underline;
+}
+
+.form-privacy {
+    margin-top: 16px;
 }
 
 .client {
@@ -1088,17 +1159,27 @@ footer {
 }
 
 .social-links a {
-    width: auto;
+    width: 42px;
     min-width: 42px;
     height: 42px;
-    padding: 0 14px;
+    padding: 0;
     background: rgba(255, 255, 255, 0.1);
-    border-radius: 24px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.9rem;
     transition: var(--transition);
+}
+
+.social-links img {
+    display: block;
+    width: 26px;
+    height: 26px;
+}
+
+.social-links a:focus-visible {
+    outline: 2px solid white;
+    outline-offset: 3px;
 }
 
 .social-links a:hover {
@@ -1107,13 +1188,11 @@ footer {
 }
 
 .footer-logo {
-    width: 106px;
-    height: 70px;
+    width: 230px;
+    height: 62px;
     object-fit: contain;
     object-position: left center;
     margin-bottom: 12px;
-    background: white;
-    border-radius: 8px;
 }
 
 .admin-section {
@@ -1296,8 +1375,8 @@ footer {
     }
 
     .logo img {
-        width: 50px;
-        height: 50px;
+        width: 190px;
+        height: 52px;
     }
 
     .hero-content,
@@ -1399,13 +1478,8 @@ footer {
     }
 
     .logo img {
-        width: 46px;
+        width: 170px;
         height: 46px;
-    }
-
-    .logo .brand-name {
-        max-width: 180px;
-        font-size: 0.9rem;
     }
 
     .admin-heading {
