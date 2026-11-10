@@ -29,11 +29,23 @@ function renderWorks(works) {
     for (const work of works) {
         const item = document.createElement("article");
         item.className = "portfolio-item";
+        const picture = document.createElement("picture");
+        const isStaticImage = work.imageUrl.startsWith("/images/");
+        const imageUrl = isStaticImage
+            ? new URL(work.imageUrl, window.location.origin).toString()
+            : window.mmdApiUrl(work.imageUrl);
+        if (isStaticImage && work.imageUrl.endsWith(".png")) {
+            const source = document.createElement("source");
+            source.type = "image/webp";
+            source.srcset = new URL(work.imageUrl.replace(/\.png$/, ".webp"), window.location.origin).toString();
+            picture.append(source);
+        }
         const image = document.createElement("img");
-        image.src = window.mmdApiUrl(work.imageUrl);
+        image.src = imageUrl;
         image.alt = work.title;
         image.loading = "lazy";
         image.setAttribute("translate", "no");
+        picture.append(image);
         const overlay = document.createElement("div");
         overlay.className = "portfolio-overlay";
         const title = document.createElement("h3");
@@ -52,7 +64,7 @@ function renderWorks(works) {
             description.setAttribute("translate", "no");
             overlay.append(description);
         }
-        item.append(image, overlay);
+        item.append(picture, overlay);
         worksGrid.append(item);
     }
 }

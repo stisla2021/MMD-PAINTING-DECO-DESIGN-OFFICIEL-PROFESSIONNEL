@@ -6,6 +6,7 @@
     <title>MMD DECO Design Official | Painting &amp; Design</title>
     <meta name="description" content="MMD PAINTING provides interior and exterior painting, decoration, and design for homes and businesses in The Gambia and Senegal.">
     <link rel="canonical" href="https://mmd-painting-deco-design.pages.dev/">
+    <link rel="preload" as="image" href="images/mmd-company-poster.webp" type="image/webp" fetchpriority="high">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
     <link rel="icon" type="image/png" sizes="32x32" href="images/favicon-32x32.png">
@@ -78,7 +79,10 @@
                     </div>
                 </div>
                 <div class="hero-image company-poster">
-                    <img src="images/mmd-company-poster.png" alt="MMD PAINTING poster featuring the team and company services">
+                    <picture>
+                        <source srcset="images/mmd-company-poster.webp" type="image/webp">
+                        <img src="images/mmd-company-poster.png" alt="MMD PAINTING poster featuring the team and company services" width="720" height="1280" loading="eager" fetchpriority="high">
+                    </picture>
                 </div>
             </div>
         </div>
@@ -92,7 +96,10 @@
             </div>
             <div class="services-grid home-service-grid">
                 <article class="service-card home-service-card">
-                    <img class="service-photo" src="images/interior-house-painting.png" alt="Interior painting project in a home" loading="lazy">
+                    <picture>
+                        <source srcset="images/interior-house-painting.webp" type="image/webp">
+                        <img class="service-photo" src="images/interior-house-painting.png" alt="Interior painting project in a home" width="1024" height="768" loading="lazy">
+                    </picture>
                     <div class="home-service-copy">
                         <h3>Interior Painting</h3>
                         <p>Refresh rooms, hallways, and ceilings with careful preparation and tidy finishes.</p>
@@ -100,7 +107,10 @@
                     </div>
                 </article>
                 <article class="service-card home-service-card">
-                    <img class="service-photo" src="images/exterior-house-painting.png" alt="Exterior painting project on a house" loading="lazy">
+                    <picture>
+                        <source srcset="images/exterior-house-painting.webp" type="image/webp">
+                        <img class="service-photo" src="images/exterior-house-painting.png" alt="Exterior painting project on a house" width="1024" height="768" loading="lazy">
+                    </picture>
                     <div class="home-service-copy">
                         <h3>Exterior Painting</h3>
                         <p>Refresh exterior walls, gates, and other painted surfaces with a clean, durable finish.</p>
@@ -118,7 +128,10 @@
                 <p>A recent interior refresh by the MMD team.</p>
             </div>
             <article class="project-feature-card">
-                <img src="images/recent-hallway-project.png" alt="Recently finished hallway with soft blue walls and white trim" loading="lazy">
+                <picture>
+                    <source srcset="images/recent-hallway-project.webp" type="image/webp">
+                    <img src="images/recent-hallway-project.png" alt="Recently finished hallway with soft blue walls and white trim" width="720" height="1085" loading="lazy">
+                </picture>
                 <div class="project-feature-copy">
                     <p class="project-feature-category">Interior Painting</p>
                     <h3>Blue Hallway Refresh</h3>
@@ -144,11 +157,17 @@
             </div>
             <div class="home-team-photos">
                 <figure>
-                    <img src="images/mustapha-owner.png" alt="Mustapha Jallow and a coworker working on a painting project" loading="lazy">
+                    <picture>
+                        <source srcset="images/mustapha-owner.webp" type="image/webp">
+                        <img src="images/mustapha-owner.png" alt="Mustapha Jallow and a coworker working on a painting project" width="768" height="1024" loading="lazy">
+                    </picture>
                     <figcaption>Mustapha Jallow</figcaption>
                 </figure>
                 <figure>
-                    <img src="images/mmd-team.png" alt="MMD PAINTING team working together" loading="lazy">
+                    <picture>
+                        <source srcset="images/mmd-team.webp" type="image/webp">
+                        <img src="images/mmd-team.png" alt="MMD PAINTING team working together" width="768" height="1024" loading="lazy">
+                    </picture>
                     <figcaption>MMD PAINTING Team</figcaption>
                 </figure>
             </div>

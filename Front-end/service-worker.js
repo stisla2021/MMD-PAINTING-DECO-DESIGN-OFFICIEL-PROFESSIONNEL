@@ -1,4 +1,4 @@
-const cacheName = "mmd-static-v2";
+const cacheName = "mmd-static-v3";
 const appShell = [
   "/",
   "/index.html",
