@@ -40,12 +40,18 @@ the same Wi-Fi, use the computer's LAN address and configure
 | Services      | Detailed list of painting services   |
 | Reviews       | View and submit customer reviews (`comments.html`) |
 | Contact       | Quote request form                   |
-| Admin         | View quote requests and manage project photos (`admin.html`) |
+| Admin         | View quote requests, moderate reviews, and manage project photos (`admin.html`) |
 
 The header and footer logo is `images/mmd-deco-logo.svg`, with
-`images/favicon.svg` used as the site icon. The home-page Recent
+`images/favicon.svg` and `images/apple-touch-icon.png` used as site icons. All
+image assets are kept in the `images/` folder. The home-page Recent
 Projects gallery is loaded from the backend, and the admin page can publish
 photos that appear there.
+Cloudflare Pages Functions entrypoints remain in the project-root `functions/`
+folder, as required by Pages. Supporting backend code, D1 migrations, and
+Cloudflare Function tests are organized under the project-root `backend/`
+folder. `wrangler.jsonc` points D1 migrations at `backend/migrations/`.
+
 Cloudflare Pages security response headers are configured in `_headers`;
 review its content security policy if adding external scripts, fonts, embeds,
 or API hosts.
@@ -75,11 +81,10 @@ and R2 for project images.
   error if the API is unavailable
 - Existing online comments are read from `/api/comments`. New reviews include a
   name, optional location, 1-5 star rating, comment, and an emoji or optional
-  photo avatar. Photos are cropped and resized before being saved with the
-  review in that visitor's browser using localStorage. Browser-saved reviews and
-  avatars are not visible to other visitors; shared submissions require a
-  review API that supports rating, location, and avatar moderation.
-- The protected admin page lists quote requests and manages recent-work photos;
+  photo avatar. New reviews remain private until approved in the protected
+  admin dashboard; approval publishes the review and its avatar. Older
+  browser-local reviews are still shown only in that visitor's browser.
+- The protected admin page lists quote requests, moderates pending reviews, and manages recent-work photos;
   enter the `ADMIN_API_KEY` configured in `../backend/.env` for local use or
   Cloudflare Pages secrets for production
 

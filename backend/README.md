@@ -66,23 +66,41 @@ Returns saved quote requests newest first. This endpoint requires the configured
 
 ### `POST /api/comments`
 
-Requires a non-empty `name` (up to 100 characters) and `comment` (up to 2,000
-characters). Returns `201 Created` after saving to `data/comments.json`.
+Requires `name` (up to 100 characters), `rating` (an integer from 1 to 5), and
+`comment` (up to 2,000 characters). `location` is optional (up to 100
+characters), and `avatar` may be one of the site's emoji choices or a resized
+JPEG photo. Returns `201 Created`; new reviews are saved with `pending` status
+and are not shown publicly until approved.
 
 ```json
 {
   "name": "Jordan Smith",
+  "location": "Banjul",
+  "rating": 5,
+  "avatar": "🙂",
   "comment": "The crew did a great job on our home."
 }
 ```
 
 ### `GET /api/comments`
 
-Returns `{ "comments": [...] }`, newest first. Each comment has an `id`, `name`,
-`comment`, and `createdAt`.
+Returns approved reviews newest first. Existing local reviews without a status
+remain visible for compatibility.
+
+The protected `GET /api/comments/pending` endpoint returns reviews awaiting
+approval. Use the `X-Admin-Key` header for this endpoint and for
+`POST /api/comments/:id/approve`. `DELETE /api/comments/:id` permanently
+rejects and removes a pending review. These controls are available on
+`Front-end/admin.html`.
+
+The public review form resizes photos to small JPEG avatars before submission.
+The owner reviews the rating, name, optional location, comment, and avatar in the
+admin dashboard before publishing it. On Cloudflare, review records (including
+the compact avatar data) are stored in D1; local development stores them in
+`data/comments.json`.
 
 `GET /api/health` returns `{ "status": "ok" }`. API requests are limited to 100
-per IP address per 15 minutes; JSON request bodies are limited to 10 KB.
+per IP address per 15 minutes; JSON request bodies are limited to 48 KB.
 
 ### Recent work and admin uploads
 
@@ -131,84 +149,12 @@ The recent-project gallery and admin uploader use the same API URL helper.
 Cloudflare stores project records in D1 and uploaded images in R2; the admin key
 is configured as a Pages secret and is never included in the frontend.
 
-## Display comments on the website
-
-Add a comments container and form to the desired page:
-
-```html
-<form id="commentForm">
-  <label>
-    Name
-    <input name="name" required maxlength="100">
-  </label>
-  <label>
-    Comment
-    <textarea name="comment" required maxlength="2000"></textarea>
-  </label>
-  <button type="submit">Leave a comment</button>
-</form>
-<p id="commentStatus" role="status"></p>
-<section id="commentsList" aria-live="polite"></section>
-```
-
-In a frontend script, load and render comments with DOM methods so submitted
-text is treated as text, not HTML:
-
-```js
-const commentsList = document.querySelector("#commentsList");
-const commentStatus = document.querySelector("#commentStatus");
-const commentForm = document.querySelector("#commentForm");
-
-async function loadComments() {
-  const response = await fetch("http://localhost:3000/api/comments");
-  if (!response.ok) throw new Error(`Could not load comments (${response.status}).`);
-
-  const { comments } = await response.json();
-  commentsList.replaceChildren(
-    ...comments.map((comment) => {
-      const article = document.createElement("article");
-      const author = document.createElement("h3");
-      const text = document.createElement("p");
-      author.textContent = comment.name;
-      text.textContent = comment.comment;
-      article.append(author, text);
-      return article;
-    }),
-  );
-}
-
-commentForm.addEventListener("submit", async (event) => {
-  event.preventDefault();
-  try {
-    const formData = new FormData(commentForm);
-    const response = await fetch("http://localhost:3000/api/comments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: formData.get("name"),
-        comment: formData.get("comment"),
-      }),
-    });
-
-    if (!response.ok) throw new Error("Could not submit your comment.");
-    commentForm.reset();
-    commentStatus.textContent = "Thank you for your comment.";
-    await loadComments();
-  } catch (error) {
-    commentStatus.textContent = error.message;
-  }
-});
-
-loadComments().catch((error) => {
-  commentStatus.textContent = error.message;
-});
-```
-
-Use the production API URL in place of `http://localhost:3000` after deployment,
-and list the website's exact origin in `FRONTEND_ORIGINS`.
-
 ## Storage note
 
-JSON files are convenient for development and small deployments. Run one
-backend instance and make regular backups; for multiple instances or higher
-traffic, use a database with durable concurrent writes.
+The local JSON stores are for development only; run one backend instance and
+make regular backups. Production review/work records use D1 and project photos
+use R2 when that optional binding is configured. Review avatars are deliberately
+resized and capped before being stored. The public review and work endpoints
+currently return the full published lists; add cursor pagination and move
+avatars to object storage if the archive grows enough to affect response size
+or page loading.

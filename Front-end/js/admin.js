@@ -8,10 +8,14 @@ const workStatus = document.getElementById("workStatus");
 const adminWorksList = document.getElementById("adminWorksList");
 const adminQuotesList = document.getElementById("adminQuotesList");
 const quoteStatus = document.getElementById("quoteStatus");
+const adminReviewsList = document.getElementById("adminReviewsList");
+const pendingReviewStatusElement = document.getElementById("reviewStatus");
 const logoutButton = document.getElementById("adminLogout");
 const refreshQuotesButton = document.getElementById("refreshQuotes");
+const refreshReviewsButton = document.getElementById("refreshReviews");
 const adminApiUrl = window.mmdApiUrl("/api/works");
 const adminQuotesApiUrl = window.mmdApiUrl("/api/quotes");
+const adminReviewsApiUrl = window.mmdApiUrl("/api/comments");
 let currentAdminKey = "";
 if (!(keyForm instanceof HTMLFormElement)) {
     throw new Error('The admin page is missing the "#adminKeyForm" form.');
@@ -40,11 +44,20 @@ if (!(adminQuotesList instanceof HTMLElement)) {
 if (!(quoteStatus instanceof HTMLElement)) {
     throw new Error('The admin page is missing the "#quoteStatus" status area.');
 }
+if (!(adminReviewsList instanceof HTMLElement)) {
+    throw new Error('The admin page is missing the "#adminReviewsList" list.');
+}
+if (!(pendingReviewStatusElement instanceof HTMLElement)) {
+    throw new Error('The admin page is missing the "#reviewStatus" status area.');
+}
 if (!(logoutButton instanceof HTMLButtonElement)) {
     throw new Error('The admin page is missing the "#adminLogout" button.');
 }
 if (!(refreshQuotesButton instanceof HTMLButtonElement)) {
     throw new Error('The admin page is missing the "#refreshQuotes" button.');
+}
+if (!(refreshReviewsButton instanceof HTMLButtonElement)) {
+    throw new Error('The admin page is missing the "#refreshReviews" button.');
 }
 const adminKeyForm = keyForm;
 const adminKeyInput = keyInput;
@@ -55,8 +68,11 @@ const adminWorkStatus = workStatus;
 const adminWorksContainer = adminWorksList;
 const adminQuotesContainer = adminQuotesList;
 const adminQuoteStatus = quoteStatus;
+const adminReviewsContainer = adminReviewsList;
+const adminReviewStatus = pendingReviewStatusElement;
 const adminLogoutButton = logoutButton;
 const adminRefreshQuotesButton = refreshQuotesButton;
+const adminRefreshReviewsButton = refreshReviewsButton;
 const workImage = adminWorkForm.querySelector("#workImage");
 const uploadButton = adminWorkForm.querySelector('button[type="submit"]');
 if (!workImage) {
@@ -100,6 +116,31 @@ function isAdminQuotesResponse(value) {
     }
     const record = value;
     return Array.isArray(record.quotes) && record.quotes.every(isAdminQuote);
+}
+function isAdminReview(value) {
+    if (typeof value !== "object" || value === null) {
+        return false;
+    }
+    const record = value;
+    return (typeof record.id === "string" &&
+        typeof record.name === "string" &&
+        typeof record.location === "string" &&
+        typeof record.rating === "number" &&
+        Number.isInteger(record.rating) &&
+        record.rating >= 1 &&
+        record.rating <= 5 &&
+        typeof record.avatar === "string" &&
+        (["🙂", "😊", "😎", "🤗", "🎨", "🏠", "🌟"].includes(record.avatar) ||
+            /^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(record.avatar)) &&
+        typeof record.comment === "string" &&
+        typeof record.createdAt === "string");
+}
+function isAdminReviewsResponse(value) {
+    if (typeof value !== "object" || value === null) {
+        return false;
+    }
+    const record = value;
+    return Array.isArray(record.comments) && record.comments.every(isAdminReview);
 }
 function getAdminKey() {
     return currentAdminKey;
@@ -292,6 +333,127 @@ async function loadAdminQuotes() {
         adminRefreshQuotesButton.disabled = false;
     }
 }
+function renderAdminReviews(reviews) {
+    adminReviewsContainer.replaceChildren();
+    if (reviews.length === 0) {
+        const empty = document.createElement("p");
+        window.mmdSetTranslatedText(empty, "No reviews are waiting for approval.");
+        adminReviewsContainer.append(empty);
+        return;
+    }
+    for (const review of reviews) {
+        const item = document.createElement("article");
+        item.className = "admin-quote-item admin-review-item";
+        const heading = document.createElement("div");
+        heading.className = "admin-review-heading";
+        const avatar = document.createElement("span");
+        avatar.className = "admin-review-avatar";
+        avatar.setAttribute("aria-hidden", "true");
+        if (review.avatar.startsWith("data:image/jpeg;base64,")) {
+            const photo = document.createElement("img");
+            photo.src = review.avatar;
+            photo.alt = "";
+            avatar.append(photo);
+        }
+        else {
+            avatar.textContent = review.avatar;
+        }
+        const name = document.createElement("h3");
+        name.textContent = review.name;
+        name.setAttribute("translate", "no");
+        const received = document.createElement("time");
+        received.dateTime = review.createdAt;
+        const parsedDate = new Date(review.createdAt);
+        const displayDate = Number.isNaN(parsedDate.getTime())
+            ? review.createdAt
+            : parsedDate.toLocaleString();
+        window.mmdSetTranslatedText(received, "Received {date}", {
+            date: displayDate,
+        });
+        heading.append(avatar, name, received);
+        const rating = document.createElement("p");
+        rating.className = "review-rating";
+        rating.textContent = `${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}`;
+        rating.setAttribute("aria-label", window.mmdTranslateText("Rating: {rating} out of 5", {
+            rating: review.rating,
+        }));
+        const location = document.createElement("p");
+        if (review.location) {
+            window.mmdSetTranslatedText(location, "Location: {location}", {
+                location: review.location,
+            });
+        }
+        const comment = document.createElement("p");
+        comment.className = "admin-quote-message";
+        comment.textContent = review.comment;
+        const actions = document.createElement("div");
+        actions.className = "admin-review-actions";
+        const approveButton = document.createElement("button");
+        approveButton.type = "button";
+        approveButton.className = "btn";
+        window.mmdSetTranslatedText(approveButton, "Approve");
+        approveButton.addEventListener("click", () => {
+            void moderateReview(review, approveButton, true);
+        });
+        const rejectButton = document.createElement("button");
+        rejectButton.type = "button";
+        rejectButton.className = "btn btn-danger";
+        window.mmdSetTranslatedText(rejectButton, "Reject");
+        rejectButton.addEventListener("click", () => {
+            void moderateReview(review, rejectButton, false);
+        });
+        actions.append(approveButton, rejectButton);
+        item.append(heading, rating);
+        if (review.location) {
+            item.append(location);
+        }
+        item.append(comment, actions);
+        adminReviewsContainer.append(item);
+    }
+}
+async function loadAdminReviews() {
+    adminRefreshReviewsButton.disabled = true;
+    window.mmdSetTranslatedText(adminReviewStatus, "Loading pending reviews...");
+    try {
+        const result = await requestJson(`${adminReviewsApiUrl}/pending`);
+        if (!isAdminReviewsResponse(result)) {
+            throw new Error("The server returned pending reviews in an unexpected format.");
+        }
+        renderAdminReviews(result.comments);
+        window.mmdSetTranslatedText(adminReviewStatus, "");
+    }
+    catch (error) {
+        console.error("Could not load pending reviews:", error);
+        window.mmdSetTranslatedText(adminReviewStatus, "Could not load pending reviews. {message}", {
+            message: error instanceof Error ? error.message : "Please try again.",
+        });
+    }
+    finally {
+        adminRefreshReviewsButton.disabled = false;
+    }
+}
+async function moderateReview(review, button, approve) {
+    if (!approve &&
+        !window.confirm(window.mmdTranslateText('Reject "{name}"\'s review?', {
+            name: review.name,
+        }))) {
+        return;
+    }
+    button.disabled = true;
+    window.mmdSetTranslatedText(adminReviewStatus, approve ? "Approving review..." : "Rejecting review...");
+    try {
+        await requestJson(`${adminReviewsApiUrl}/${encodeURIComponent(review.id)}${approve ? "/approve" : ""}`, { method: approve ? "POST" : "DELETE" });
+        await loadAdminReviews();
+        window.mmdSetTranslatedText(adminReviewStatus, approve ? "Review approved and published." : "Review rejected.");
+    }
+    catch (error) {
+        console.error("Could not moderate the review:", error);
+        window.mmdSetTranslatedText(adminReviewStatus, error instanceof Error ? error.message : "Could not update the review.");
+    }
+    finally {
+        button.disabled = false;
+    }
+}
 adminKeyForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const key = adminKeyInput.value.trim();
@@ -306,6 +468,7 @@ adminKeyForm.addEventListener("submit", async (event) => {
         await loadAdminWorks();
         setAuthenticated(true);
         await loadAdminQuotes();
+        await loadAdminReviews();
     }
     catch (error) {
         console.error("Admin access could not be verified:", error);
@@ -318,10 +481,15 @@ adminLogoutButton.addEventListener("click", () => {
     adminKeyInput.value = "";
     adminQuotesContainer.replaceChildren();
     window.mmdSetTranslatedText(adminQuoteStatus, "");
+    adminReviewsContainer.replaceChildren();
+    window.mmdSetTranslatedText(adminReviewStatus, "");
     setAuthenticated(false);
 });
 adminRefreshQuotesButton.addEventListener("click", () => {
     void loadAdminQuotes();
+});
+adminRefreshReviewsButton.addEventListener("click", () => {
+    void loadAdminReviews();
 });
 adminWorkForm.addEventListener("submit", async (event) => {
     event.preventDefault();

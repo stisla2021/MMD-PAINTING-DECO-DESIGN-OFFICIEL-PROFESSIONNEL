@@ -46,11 +46,11 @@ export function createApp({
         error.status = 403;
         return callback(error);
       },
-      methods: ["GET", "POST", "OPTIONS"],
+      methods: ["GET", "POST", "DELETE", "OPTIONS"],
       allowedHeaders: ["Content-Type", "X-Admin-Key"],
     }),
   );
-  app.use(express.json({ limit: "10kb" }));
+  app.use(express.json({ limit: "48kb" }));
   app.use(
     "/api",
     rateLimit({
@@ -82,7 +82,10 @@ export function createApp({
   );
   app.use(
     "/api/comments",
-    createCommentsRouter(createJsonStore(path.join(dataDirectory, "comments.json"))),
+    createCommentsRouter({
+      store: createJsonStore(path.join(dataDirectory, "comments.json")),
+      adminApiKey,
+    }),
   );
   app.use(
     "/api/works",
@@ -115,7 +118,9 @@ export function createApp({
         status >= 500
           ? "An unexpected server error occurred."
           : status === 413
-            ? "Image files must be 6 MB or smaller."
+            ? error.code === "LIMIT_FILE_SIZE"
+              ? "Image files must be 6 MB or smaller."
+              : "JSON request bodies must be 48 KB or smaller."
             : error.message,
     });
   });

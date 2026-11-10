@@ -20,7 +20,7 @@
         <section class="page-hero">
             <div class="container">
                 <h1>Admin dashboard</h1>
-                <p>Manage quote requests and project photos</p>
+                <p>Manage quote requests, customer reviews, and project photos</p>
             </div>
         </section>
 
@@ -50,6 +50,15 @@
                         </div>
                         <p id="quoteStatus" class="comment-status" role="status" aria-live="polite"></p>
                         <div id="adminQuotesList" class="admin-quotes-list"></div>
+                    </section>
+
+                    <section class="admin-current-work" aria-labelledby="pendingReviewsHeading">
+                        <div class="admin-heading">
+                            <h2 id="pendingReviewsHeading">Pending customer reviews</h2>
+                            <button id="refreshReviews" type="button" class="btn btn-secondary">Refresh reviews</button>
+                        </div>
+                        <p id="reviewStatus" class="comment-status" role="status" aria-live="polite"></p>
+                        <div id="adminReviewsList" class="admin-quotes-list"></div>
                     </section>
 
                     <form id="workForm" class="contact-form">

@@ -8,7 +8,7 @@
       "binding": "DB",
       "database_name": "mmd-painting-db",
       "database_id": "15ff10f8-a47e-4f21-b74f-58959e26a671",
-      "migrations_dir": "migrations"
+      "migrations_dir": "backend/migrations"
     }
   ]
 }

@@ -292,7 +292,7 @@ async function loadComments(): Promise<void> {
     renderComments(browserComments);
     window.mmdSetTranslatedText(
       reviewStatus,
-      "Online reviews are unavailable. Reviews submitted here will only be saved in this browser.",
+      "Online reviews are temporarily unavailable. Please try again later.",
     );
   }
 }
@@ -335,38 +335,60 @@ commentForm.addEventListener("submit", async (event: SubmitEvent) => {
       preparingPhoto = false;
     }
 
-    window.mmdSetTranslatedText(
-      reviewStatus,
-      "Saving your review on this device...",
-    );
-    const savedComments = readStoredComments();
     if (!isReviewAvatar(avatar)) {
       throw new Error("The selected avatar is invalid.");
     }
-    const newComment: CustomerComment = {
-      id: `local-${crypto.randomUUID()}`,
-      name,
-      ...(location ? { location } : {}),
-      avatar,
-      rating,
-      comment,
-      createdAt: new Date().toISOString(),
-    };
-    const updatedComments = [newComment, ...savedComments];
-    localStorage.setItem(reviewStorageKey, JSON.stringify(updatedComments));
+    window.mmdSetTranslatedText(reviewStatus, "Submitting your review...");
+    const response = await fetch(commentsApiUrl, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name,
+        location,
+        avatar,
+        rating,
+        comment,
+      }),
+    });
+    if (!response.ok) {
+      let message = window.mmdTranslateText(
+        "Could not submit your review (server returned {status}).",
+        { status: response.status },
+      );
+      try {
+        const result: unknown = await response.json();
+        if (
+          typeof result === "object" &&
+          result !== null &&
+          "error" in result &&
+          typeof result.error === "string"
+        ) {
+          message = result.error;
+        }
+      } catch (error) {
+        console.error("Could not read the review submission error:", error);
+      }
+      throw new Error(message);
+    }
+
     commentForm.reset();
-    renderComments([...updatedComments, ...onlineComments]);
+    renderComments([
+      ...displayedComments.filter((entry) => entry.id.startsWith("local-")),
+      ...onlineComments,
+    ]);
     window.mmdSetTranslatedText(
       reviewStatus,
-      "Your review is saved on this device. Other visitors will not see it.",
+      "Thank you. Your review will appear after owner approval.",
     );
   } catch (error) {
-    console.error("Could not save review in this browser:", error);
+    console.error("Could not submit the review:", error);
     window.mmdSetTranslatedText(
       reviewStatus,
       preparingPhoto
         ? "Could not use that photo. Choose an image up to 5 MB."
-        : "Could not save your review in this browser. Check storage availability and try again.",
+        : error instanceof Error
+          ? error.message
+          : "Could not submit your review. Please try again.",
     );
   } finally {
     if (commentSubmitButton) commentSubmitButton.disabled = false;

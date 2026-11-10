@@ -1,4 +1,4 @@
-const cacheName = "mmd-static-v1";
+const cacheName = "mmd-static-v2";
 const appShell = [
   "/",
   "/index.html",
@@ -19,7 +19,7 @@ const appShell = [
   "/images/mmd-deco-logo.svg",
   "/images/favicon.svg",
   "/images/favicon-32x32.png",
-  "/apple-touch-icon.png",
+  "/images/apple-touch-icon.png",
   "/images/social-preview.jpg",
   "/images/app-icon-192.png",
   "/images/app-icon-512.png",

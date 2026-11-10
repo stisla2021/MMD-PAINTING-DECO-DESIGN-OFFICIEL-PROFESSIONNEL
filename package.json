@@ -4,7 +4,7 @@
   "type": "module",
   "scripts": {
     "dev": "node scripts/dev.js",
-    "test:cloudflare": "node --test cloudflare/test/pages-functions.test.js",
+    "test:cloudflare": "node --test backend/test/pages-functions.test.js",
     "cloudflare:db:create": "wrangler d1 create mmd-painting-db",
     "cloudflare:r2:create": "wrangler r2 bucket create mmd-painting-uploads",
     "cloudflare:migrate": "wrangler d1 migrations apply mmd-painting-db --remote",

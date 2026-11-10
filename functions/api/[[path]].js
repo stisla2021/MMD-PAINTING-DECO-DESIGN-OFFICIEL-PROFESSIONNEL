@@ -1,7 +1,18 @@
 const maximumImageSize = 6 * 1024 * 1024;
 const maximumJsonSize = 10 * 1024;
+const maximumReviewJsonSize = 48 * 1024;
+const maximumAvatarDataUrlLength = 32_000;
 const rateLimitWindowMs = 15 * 60 * 1000;
 const rateLimitMaximum = 100;
+const reviewAvatarChoices = new Set([
+  "🙂",
+  "😊",
+  "😎",
+  "🤗",
+  "🎨",
+  "🏠",
+  "🌟",
+]);
 const imageTypes = new Map([
   ["image/jpeg", ".jpg"],
   ["image/png", ".png"],
@@ -30,15 +41,26 @@ function methodNotAllowed(allowed) {
   return errorResponse("Method not allowed.", 405, { Allow: allowed });
 }
 
-async function readJson(request) {
+async function readJson(request, maximumSize = maximumJsonSize) {
+  const maximumSizeLabel = `${maximumSize / 1024} KB`;
   const contentLength = Number(request.headers.get("content-length") ?? 0);
-  if (contentLength > maximumJsonSize) {
-    return { error: errorResponse("Request body must be 10 KB or smaller.", 413) };
+  if (contentLength > maximumSize) {
+    return {
+      error: errorResponse(
+        `Request body must be ${maximumSizeLabel} or smaller.`,
+        413,
+      ),
+    };
   }
 
   const text = await request.text();
-  if (new TextEncoder().encode(text).byteLength > maximumJsonSize) {
-    return { error: errorResponse("Request body must be 10 KB or smaller.", 413) };
+  if (new TextEncoder().encode(text).byteLength > maximumSize) {
+    return {
+      error: errorResponse(
+        `Request body must be ${maximumSizeLabel} or smaller.`,
+        413,
+      ),
+    };
   }
 
   try {
@@ -284,23 +306,27 @@ async function getQuotes(request, env) {
 async function getComments(request, env) {
   if (request.method === "GET") {
     const { results } = await env.DB.prepare(
-      `SELECT id, name, comment, created_at
+      `SELECT id, name, location, rating, avatar, comment, created_at
        FROM comments
+       WHERE status = 'approved'
        ORDER BY created_at DESC, id DESC`,
     ).all();
     return jsonResponse({
-      comments: results.map(({ id, name, comment, created_at }) => ({
-        id,
-        name,
-        comment,
-        createdAt: created_at,
+      comments: results.map((comment) => ({
+        id: comment.id,
+        name: comment.name,
+        location: comment.location,
+        ...(comment.rating === null ? {} : { rating: comment.rating }),
+        avatar: comment.avatar,
+        comment: comment.comment,
+        createdAt: comment.created_at,
       })),
     });
   }
   if (request.method !== "POST") {
     return methodNotAllowed("GET, POST");
   }
-  const parsed = await readJson(request);
+  const parsed = await readJson(request, maximumReviewJsonSize);
   if (parsed.error) {
     return parsed.error;
   }
@@ -309,27 +335,147 @@ async function getComments(request, env) {
     required: true,
     maxLength: 100,
   });
+  const location = readText(parsed.body.location ?? "", "Location", {
+    maxLength: 100,
+  });
   const comment = readText(parsed.body.comment, "Comment", {
     required: true,
     maxLength: 2000,
   });
-  const invalidField = [name, comment].find((field) => field.error);
+  const invalidField = [name, location, comment].find((field) => field.error);
   if (invalidField) {
     return errorResponse(invalidField.error, 400);
+  }
+
+  const rating = parsed.body.rating;
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return errorResponse("Rating must be a whole number from 1 to 5.", 400);
+  }
+
+  const avatar = parsed.body.avatar ?? "🙂";
+  if (
+    typeof avatar !== "string" ||
+    (!reviewAvatarChoices.has(avatar) &&
+      (avatar.length > maximumAvatarDataUrlLength ||
+        !/^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(avatar)))
+  ) {
+    return errorResponse("Choose a valid emoji or resized JPEG avatar.", 400);
+  }
+  if (!reviewAvatarChoices.has(avatar)) {
+    let photoBytes;
+    try {
+      photoBytes = Uint8Array.from(
+        atob(avatar.slice("data:image/jpeg;base64,".length)),
+        (character) => character.charCodeAt(0),
+      );
+    } catch {
+      return errorResponse("Choose a valid emoji or resized JPEG avatar.", 400);
+    }
+    if (!hasImageSignature(photoBytes, "image/jpeg")) {
+      return errorResponse("Choose a valid emoji or resized JPEG avatar.", 400);
+    }
   }
 
   const entry = {
     id: crypto.randomUUID(),
     name: name.value,
+    location: location.value,
+    rating,
+    avatar,
     comment: comment.value,
     createdAt: new Date().toISOString(),
+    status: "pending",
   };
   await env.DB.prepare(
-    "INSERT INTO comments (id, name, comment, created_at) VALUES (?, ?, ?, ?)",
+    `INSERT INTO comments
+     (id, name, location, rating, avatar, comment, created_at, status)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   )
-    .bind(entry.id, entry.name, entry.comment, entry.createdAt)
+    .bind(
+      entry.id,
+      entry.name,
+      entry.location,
+      entry.rating,
+      entry.avatar,
+      entry.comment,
+      entry.createdAt,
+      entry.status,
+    )
     .run();
-  return jsonResponse({ message: "Comment received.", comment: entry }, 201);
+  return jsonResponse(
+    { message: "Review submitted for approval.", review: entry },
+    201,
+  );
+}
+
+async function getPendingComments(request, env) {
+  if (request.method !== "GET") {
+    return methodNotAllowed("GET");
+  }
+  const authorizationError = await authorize(request, env);
+  if (authorizationError) {
+    return authorizationError;
+  }
+
+  const { results } = await env.DB.prepare(
+    `SELECT id, name, location, rating, avatar, comment, created_at
+     FROM comments
+     WHERE status = 'pending'
+     ORDER BY created_at ASC, id ASC`,
+  ).all();
+  return jsonResponse({
+    comments: results.map((comment) => ({
+      id: comment.id,
+      name: comment.name,
+      location: comment.location,
+      rating: comment.rating,
+      avatar: comment.avatar,
+      comment: comment.comment,
+      createdAt: comment.created_at,
+    })),
+  });
+}
+
+async function approveComment(request, env, id) {
+  if (request.method !== "POST") {
+    return methodNotAllowed("POST");
+  }
+  const authorizationError = await authorize(request, env);
+  if (authorizationError) {
+    return authorizationError;
+  }
+
+  const updated = await env.DB.prepare(
+    `UPDATE comments SET status = 'approved'
+     WHERE id = ? AND status = 'pending'
+     RETURNING id`,
+  )
+    .bind(id)
+    .first();
+  if (!updated) {
+    return errorResponse("Pending review not found.", 404);
+  }
+  return jsonResponse({ message: "Review approved." });
+}
+
+async function rejectComment(request, env, id) {
+  if (request.method !== "DELETE") {
+    return methodNotAllowed("DELETE");
+  }
+  const authorizationError = await authorize(request, env);
+  if (authorizationError) {
+    return authorizationError;
+  }
+
+  const deleted = await env.DB.prepare(
+    "DELETE FROM comments WHERE id = ? AND status = 'pending' RETURNING id",
+  )
+    .bind(id)
+    .first();
+  if (!deleted) {
+    return errorResponse("Pending review not found.", 404);
+  }
+  return new Response(null, { status: 204 });
 }
 
 async function getWorks(request, env) {
@@ -514,6 +660,19 @@ export async function onRequest({ request, env }) {
     }
     if (url.pathname === "/api/comments") {
       return await getComments(request, env);
+    }
+    if (url.pathname === "/api/comments/pending") {
+      return await getPendingComments(request, env);
+    }
+    const commentApprovalMatch = url.pathname.match(
+      /^\/api\/comments\/([^/]+)\/approve$/,
+    );
+    if (commentApprovalMatch) {
+      return await approveComment(request, env, commentApprovalMatch[1]);
+    }
+    const commentMatch = url.pathname.match(/^\/api\/comments\/([^/]+)$/);
+    if (commentMatch) {
+      return await rejectComment(request, env, commentMatch[1]);
     }
     if (url.pathname === "/api/works") {
       return await getWorks(request, env);

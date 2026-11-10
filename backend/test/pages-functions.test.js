@@ -5,6 +5,7 @@ import { onRequest as serveGoogleVerificationFile } from "../../functions/google
 import { onRequest as serveUpload } from "../../functions/uploads/[key].js";
 
 const adminApiKey = "test-admin-api-key-with-at-least-32-characters";
+const sharedPhotoAvatar = `data:image/jpeg;base64,/9j/${"A".repeat(12_000)}`;
 
 function createEnvironment() {
   const tables = {
@@ -25,8 +26,16 @@ function createEnvironment() {
         },
         async run() {
           const sql = query.replace(/\s+/g, " ").trim();
-          const [first, second, third, fourth, fifth, sixth, seventh] =
-            this.values;
+          const [
+            first,
+            second,
+            third,
+            fourth,
+            fifth,
+            sixth,
+            seventh,
+            eighth,
+          ] = this.values;
 
           if (sql.startsWith("DELETE FROM api_rate_limits")) {
             for (const [key, count] of rateLimits) {
@@ -52,9 +61,19 @@ function createEnvironment() {
             tables.comments.push({
               id: first,
               name: second,
-              comment: third,
-              created_at: fourth,
+              location: third,
+              rating: fourth,
+              avatar: fifth,
+              comment: sixth,
+              created_at: seventh,
+              status: eighth,
             });
+          } else if (sql.startsWith("UPDATE comments SET status")) {
+            const review = tables.comments.find(
+              (comment) =>
+                comment.id === first && comment.status === "pending",
+            );
+            if (review) review.status = "approved";
           } else if (sql.startsWith("INSERT INTO works")) {
             tables.works.push({
               id: first,
@@ -84,12 +103,37 @@ function createEnvironment() {
               tables.works.find((work) => work.id === this.values[0]) ?? null
             );
           }
+          if (sql.startsWith("UPDATE comments SET status")) {
+            const review = tables.comments.find(
+              (comment) =>
+                comment.id === this.values[0] && comment.status === "pending",
+            );
+            if (review) review.status = "approved";
+            return review ? { id: review.id } : null;
+          }
+          if (sql.startsWith("DELETE FROM comments")) {
+            const review = tables.comments.find(
+              (comment) =>
+                comment.id === this.values[0] && comment.status === "pending",
+            );
+            if (review) {
+              tables.comments = tables.comments.filter(
+                (comment) => comment.id !== review.id,
+              );
+              return { id: review.id };
+            }
+            return null;
+          }
           throw new Error(`Unexpected SQL in test: ${sql}`);
         },
         async all() {
           const sql = query.replace(/\s+/g, " ").trim();
-          const records = sql.startsWith("SELECT id, name, comment")
-            ? tables.comments
+          const records = sql.startsWith("SELECT id, name, location")
+            ? tables.comments.filter((comment) =>
+                sql.includes("status = 'approved'")
+                  ? comment.status === "approved"
+                  : comment.status === "pending",
+              )
             : sql.startsWith("SELECT id, name, email, phone, service, message")
               ? tables.quotes
             : sql.startsWith("SELECT id, title, category")
@@ -293,23 +337,106 @@ test("protects the quote inbox and returns saved requests to admins", async () =
   });
 });
 
-test("accepts and lists customer comments", async () => {
+test("holds new reviews for approval and publishes them after moderation", async () => {
   const env = createEnvironment();
   const response = await onRequest({
     request: makeRequest("/api/comments", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ name: "Reviewer", comment: "Great work!" }),
+      body: JSON.stringify({
+        name: "Reviewer",
+        location: "Banjul",
+        rating: 5,
+        avatar: sharedPhotoAvatar,
+        comment: "Great work!",
+      }),
     }),
     env,
   });
   assert.equal(response.status, 201);
+  const { review } = await response.json();
+  assert.equal(review.status, "pending");
 
-  const listed = await onRequest({
+  const publicBeforeApproval = await onRequest({
     request: makeRequest("/api/comments"),
     env,
   });
-  assert.equal((await listed.json()).comments[0].comment, "Great work!");
+  assert.deepEqual((await publicBeforeApproval.json()).comments, []);
+
+  const pendingWithoutKey = await onRequest({
+    request: makeRequest("/api/comments/pending"),
+    env,
+  });
+  assert.equal(pendingWithoutKey.status, 401);
+
+  const pending = await onRequest({
+    request: makeRequest("/api/comments/pending", {
+      headers: { "X-Admin-Key": adminApiKey },
+    }),
+    env,
+  });
+  const pendingReview = (await pending.json()).comments[0];
+  assert.equal(pendingReview.comment, "Great work!");
+  assert.equal(pendingReview.avatar, sharedPhotoAvatar);
+
+  const approved = await onRequest({
+    request: makeRequest(`/api/comments/${review.id}/approve`, {
+      method: "POST",
+      headers: { "X-Admin-Key": adminApiKey },
+    }),
+    env,
+  });
+  assert.equal(approved.status, 200);
+
+  const publicAfterApproval = await onRequest({
+    request: makeRequest("/api/comments"),
+    env,
+  });
+  const publishedReview = (await publicAfterApproval.json()).comments[0];
+  assert.equal(publishedReview.comment, "Great work!");
+  assert.equal(publishedReview.location, "Banjul");
+  assert.equal(publishedReview.rating, 5);
+  assert.equal(publishedReview.avatar, sharedPhotoAvatar);
+});
+
+test("rejects pending reviews and validates review ratings", async () => {
+  const env = createEnvironment();
+  const invalid = await onRequest({
+    request: makeRequest("/api/comments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Reviewer",
+        rating: 6,
+        comment: "Great work!",
+      }),
+    }),
+    env,
+  });
+  assert.equal(invalid.status, 400);
+
+  const submitted = await onRequest({
+    request: makeRequest("/api/comments", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        name: "Reviewer",
+        rating: 4,
+        comment: "Needs a small touch-up.",
+      }),
+    }),
+    env,
+  });
+  const { review } = await submitted.json();
+  const rejected = await onRequest({
+    request: makeRequest(`/api/comments/${review.id}`, {
+      method: "DELETE",
+      headers: { "X-Admin-Key": adminApiKey },
+    }),
+    env,
+  });
+  assert.equal(rejected.status, 204);
+  assert.deepEqual(env.tables.comments, []);
 });
 
 test("protects work uploads and stores, serves, and deletes published images", async () => {
