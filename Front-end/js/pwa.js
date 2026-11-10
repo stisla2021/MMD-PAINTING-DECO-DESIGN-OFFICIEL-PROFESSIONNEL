@@ -1,18 +1,9 @@
 "use strict";
 const installAppButton = document.getElementById("installAppButton");
-const installAppStatus = document.getElementById("installAppStatus");
 if (!(installAppButton instanceof HTMLButtonElement)) {
     throw new Error('The install button is missing the "#installAppButton" element.');
 }
-if (!(installAppStatus instanceof HTMLElement)) {
-    throw new Error('The install status is missing the "#installAppStatus" element.');
-}
-const installStatusElement = installAppStatus;
 let pendingInstallPrompt;
-function showInstallStatus(message) {
-    window.mmdSetTranslatedText(installStatusElement, message);
-    installStatusElement.hidden = false;
-}
 if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
         void navigator.serviceWorker
@@ -29,7 +20,6 @@ window.addEventListener("beforeinstallprompt", (event) => {
 });
 installAppButton.addEventListener("click", async () => {
     if (!pendingInstallPrompt) {
-        showInstallStatus("On Android in Chrome, open the menu and choose Install app or Add to Home screen.");
         return;
     }
     const installPrompt = pendingInstallPrompt;
@@ -37,14 +27,10 @@ installAppButton.addEventListener("click", async () => {
     installAppButton.disabled = true;
     try {
         await installPrompt.prompt();
-        const choice = await installPrompt.userChoice;
-        if (choice.outcome === "accepted") {
-            showInstallStatus("Follow the browser prompt to finish installing MMD DECO.");
-        }
+        await installPrompt.userChoice;
     }
     catch (error) {
         console.error("Could not start app installation.", error);
-        showInstallStatus("Installation could not start. Open the browser menu and choose Install app.");
     }
     finally {
         installAppButton.hidden = true;
@@ -54,5 +40,4 @@ installAppButton.addEventListener("click", async () => {
 window.addEventListener("appinstalled", () => {
     pendingInstallPrompt = undefined;
     installAppButton.hidden = true;
-    showInstallStatus("MMD DECO was added to your home screen.");
 });

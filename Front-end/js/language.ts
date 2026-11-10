@@ -311,18 +311,6 @@ const mmdFrenchTranslations: Record<string, string> = {
     "Vos coordonnées servent uniquement à répondre à votre demande de devis et ne sont pas publiées. Si l'envoi en ligne est indisponible, vous pouvez envoyer les mêmes informations par WhatsApp.",
   "Social profiles": "Profils sociaux",
   "Install app": "Installer l'application",
-  "Install MMD DECO on Your Android Phone":
-    "Installez MMD DECO sur votre téléphone Android",
-  "Open this website in Chrome on your phone and tap Install app when it appears. If you do not see the button, open Chrome’s menu and choose Install app or Add to Home screen.":
-    "Ouvrez ce site dans Chrome sur votre téléphone et appuyez sur Installer l'application lorsqu'elle apparaît. Si le bouton n'apparaît pas, ouvrez le menu de Chrome et choisissez Installer l'application ou Ajouter à l'écran d'accueil.",
-  "On Android in Chrome, open the menu and choose Install app or Add to Home screen.":
-    "Sur Android dans Chrome, ouvrez le menu et choisissez Installer l'application ou Ajouter à l'écran d'accueil.",
-  "Follow the browser prompt to finish installing MMD DECO.":
-    "Suivez les instructions du navigateur pour terminer l'installation de MMD DECO.",
-  "Installation could not start. Open the browser menu and choose Install app.":
-    "L'installation n'a pas démarré. Ouvrez le menu du navigateur et choisissez Installer l'application.",
-  "MMD DECO was added to your home screen.":
-    "MMD DECO a été ajouté à votre écran d'accueil.",
   "We could not submit your request. {message} Please try again later.":
     "Nous n'avons pas pu envoyer votre demande. {message} Veuillez réessayer plus tard.",
   "Could not submit your request. Please try again later.":
