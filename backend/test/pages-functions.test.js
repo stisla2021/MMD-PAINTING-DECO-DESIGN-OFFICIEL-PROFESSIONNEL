@@ -482,6 +482,39 @@ test("protects work uploads and stores, serves, and deletes published images", a
   assert.equal(env.images.size, 0);
 });
 
+test("serves static recent-work photos and deletes them without an R2 bucket", async () => {
+  const env = createEnvironment();
+  env.tables.works.push({
+    id: "11111111-1111-4111-8111-111111111101",
+    title: "Interior Wall Preparation",
+    category: "Surface Preparation",
+    description: "Preparing decorative interior details.",
+    image_key: "static:recent-wall-preparation.png",
+    created_at: "2026-11-10T07:01:00.000Z",
+  });
+  delete env.WORK_IMAGES;
+
+  const listed = await onRequest({
+    request: makeRequest("/api/works"),
+    env,
+  });
+  assert.equal(listed.status, 200);
+  assert.equal(
+    (await listed.json()).works[0].imageUrl,
+    "/images/recent-wall-preparation.png",
+  );
+
+  const deleted = await onRequest({
+    request: makeRequest("/api/works/11111111-1111-4111-8111-111111111101", {
+      method: "DELETE",
+      headers: { "X-Admin-Key": adminApiKey },
+    }),
+    env,
+  });
+  assert.equal(deleted.status, 204);
+  assert.deepEqual(env.tables.works, []);
+});
+
 test("rejects images whose bytes do not match their declared type", async () => {
   const env = createEnvironment();
   const form = new FormData();

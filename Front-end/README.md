@@ -44,9 +44,9 @@ the same Wi-Fi, use the computer's LAN address and configure
 
 The header and footer logo is `images/mmd-deco-logo.svg`, with
 `images/favicon.svg` and `images/apple-touch-icon.png` used as site icons. All
-image assets are kept in the `images/` folder. The home-page Recent
-Projects gallery is loaded from the backend, and the admin page can publish
-photos that appear there.
+image assets are kept in the `images/` folder. The home-page Recent Projects
+gallery includes six recent project photos and is loaded from the backend. The
+admin page can publish additional photos that appear there.
 Cloudflare Pages Functions entrypoints remain in the project-root `functions/`
 folder, as required by Pages. Supporting backend code, D1 migrations, and
 Cloudflare Function tests are organized under the project-root `backend/`

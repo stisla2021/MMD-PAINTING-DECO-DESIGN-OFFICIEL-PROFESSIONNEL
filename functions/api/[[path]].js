@@ -491,7 +491,9 @@ async function getWorks(request, env) {
         title: work.title,
         category: work.category,
         description: work.description,
-        imageUrl: `/uploads/${work.image_key}`,
+        imageUrl: work.image_key.startsWith("static:")
+          ? `/images/${work.image_key.slice("static:".length)}`
+          : `/uploads/${work.image_key}`,
         createdAt: work.created_at,
       })),
     });
@@ -615,13 +617,6 @@ async function deleteWork(request, env, encodedId) {
   if (authorizationError) {
     return authorizationError;
   }
-  if (!env.WORK_IMAGES) {
-    return errorResponse(
-      "Work uploads are not configured. Configure the WORK_IMAGES R2 binding.",
-      503,
-    );
-  }
-
   let id;
   try {
     id = decodeURIComponent(encodedId);
@@ -636,9 +631,17 @@ async function deleteWork(request, env, encodedId) {
   if (!work) {
     return errorResponse("Work item not found.", 404);
   }
+  if (!work.image_key.startsWith("static:") && !env.WORK_IMAGES) {
+    return errorResponse(
+      "Work uploads are not configured. Configure the WORK_IMAGES R2 binding.",
+      503,
+    );
+  }
 
   await env.DB.prepare("DELETE FROM works WHERE id = ?").bind(id).run();
-  await env.WORK_IMAGES.delete(work.image_key);
+  if (!work.image_key.startsWith("static:")) {
+    await env.WORK_IMAGES.delete(work.image_key);
+  }
   return new Response(null, { status: 204 });
 }
 

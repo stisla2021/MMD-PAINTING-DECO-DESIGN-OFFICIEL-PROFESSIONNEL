@@ -1,1 +1,50 @@
-[]
+[
+  {
+    "id": "11111111-1111-4111-8111-111111111101",
+    "title": "Interior Wall Preparation",
+    "category": "Surface Preparation",
+    "description": "Careful sanding and preparation of ornate interior wall details before the final finish.",
+    "imageUrl": "/images/recent-wall-preparation.png",
+    "createdAt": "2026-11-10T07:01:00.000Z"
+  },
+  {
+    "id": "11111111-1111-4111-8111-111111111102",
+    "title": "Smooth Wall Finishing",
+    "category": "Surface Preparation",
+    "description": "Wall sanding and surface preparation for a clean, even interior paint finish.",
+    "imageUrl": "/images/recent-smooth-wall-finishing.png",
+    "createdAt": "2026-11-10T08:02:00.000Z"
+  },
+  {
+    "id": "11111111-1111-4111-8111-111111111103",
+    "title": "Team Painting Preparation",
+    "category": "Team at Work",
+    "description": "Protecting the work area and preparing a room together before painting begins.",
+    "imageUrl": "/images/recent-team-preparation.png",
+    "createdAt": "2026-11-10T09:03:00.000Z"
+  },
+  {
+    "id": "11111111-1111-4111-8111-111111111104",
+    "title": "Ceiling Medallion Finishing",
+    "category": "Decorative Finishes",
+    "description": "Applying a gold finish to an ornamental ceiling medallion.",
+    "imageUrl": "/images/recent-ceiling-medallion.png",
+    "createdAt": "2026-11-10T10:04:00.000Z"
+  },
+  {
+    "id": "11111111-1111-4111-8111-111111111105",
+    "title": "Measuring Interior Trim",
+    "category": "Decorative Finishes",
+    "description": "Measuring and detailing decorative trim around an interior archway.",
+    "imageUrl": "/images/recent-interior-trim.png",
+    "createdAt": "2026-11-10T11:05:00.000Z"
+  },
+  {
+    "id": "11111111-1111-4111-8111-111111111106",
+    "title": "Decorative Archway Finishing",
+    "category": "Decorative Finishes",
+    "description": "Finishing decorative arch details and trim in a bright interior.",
+    "imageUrl": "/images/recent-archway-finishing.png",
+    "createdAt": "2026-11-10T12:06:00.000Z"
+  }
+]

@@ -1,0 +1,7 @@
+INSERT INTO works (id, title, category, description, image_key, created_at) VALUES
+  ('11111111-1111-4111-8111-111111111101', 'Interior Wall Preparation', 'Surface Preparation', 'Careful sanding and preparation of ornate interior wall details before the final finish.', 'static:recent-wall-preparation.png', '2026-11-10T07:01:00.000Z'),
+  ('11111111-1111-4111-8111-111111111102', 'Smooth Wall Finishing', 'Surface Preparation', 'Wall sanding and surface preparation for a clean, even interior paint finish.', 'static:recent-smooth-wall-finishing.png', '2026-11-10T08:02:00.000Z'),
+  ('11111111-1111-4111-8111-111111111103', 'Team Painting Preparation', 'Team at Work', 'Protecting the work area and preparing a room together before painting begins.', 'static:recent-team-preparation.png', '2026-11-10T09:03:00.000Z'),
+  ('11111111-1111-4111-8111-111111111104', 'Ceiling Medallion Finishing', 'Decorative Finishes', 'Applying a gold finish to an ornamental ceiling medallion.', 'static:recent-ceiling-medallion.png', '2026-11-10T10:04:00.000Z'),
+  ('11111111-1111-4111-8111-111111111105', 'Measuring Interior Trim', 'Decorative Finishes', 'Measuring and detailing decorative trim around an interior archway.', 'static:recent-interior-trim.png', '2026-11-10T11:05:00.000Z'),
+  ('11111111-1111-4111-8111-111111111106', 'Decorative Archway Finishing', 'Decorative Finishes', 'Finishing decorative arch details and trim in a bright interior.', 'static:recent-archway-finishing.png', '2026-11-10T12:06:00.000Z');
