@@ -137,12 +137,12 @@ export function createCommentsRouter({ store, adminApiKey }) {
       avatar,
       comment: comment.value,
       createdAt: new Date().toISOString(),
-      status: "pending",
+      status: "approved",
     };
 
     store.append(review);
     return response.status(201).json({
-      message: "Review submitted for approval.",
+      message: "Review submitted and published.",
       review,
     });
   });

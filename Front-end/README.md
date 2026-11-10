@@ -81,9 +81,8 @@ and R2 for project images.
   error if the API is unavailable
 - Existing online comments are read from `/api/comments`. New reviews include a
   name, optional location, 1-5 star rating, comment, and an emoji or optional
-  photo avatar. New reviews remain private until approved in the protected
-  admin dashboard; approval publishes the review and its avatar. Older
-  browser-local reviews are still shown only in that visitor's browser.
+  photo avatar. New reviews are saved to the shared backend and published
+  immediately so future visitors can see them.
 - The protected admin page lists quote requests, moderates pending reviews, and manages recent-work photos;
   enter the `ADMIN_API_KEY` configured in `../backend/.env` for local use or
   Cloudflare Pages secrets for production

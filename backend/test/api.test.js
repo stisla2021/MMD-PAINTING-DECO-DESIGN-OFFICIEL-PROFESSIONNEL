@@ -139,7 +139,7 @@ test("rejects invalid quote input", async () => {
   assert.match((await response.json()).error, /valid email/i);
 });
 
-test("holds reviews for approval and publishes them after admin moderation", async () => {
+test("publishes submitted reviews and keeps them visible to future visitors", async () => {
   const postResponse = await fetch(`${baseUrl}/api/comments`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -155,72 +155,50 @@ test("holds reviews for approval and publishes them after admin moderation", asy
   assert.equal(postResponse.status, 201);
   const saved = await postResponse.json();
   assert.equal(saved.review.comment, "Great work!");
-  assert.equal(saved.review.status, "pending");
+  assert.equal(saved.review.status, "approved");
 
-  const getResponse = await fetch(`${baseUrl}/api/comments`);
-  assert.equal(getResponse.status, 200);
-  const listed = await getResponse.json();
-  assert.deepEqual(listed.comments, []);
+  const firstVisitorResponse = await fetch(`${baseUrl}/api/comments`);
+  assert.equal(firstVisitorResponse.status, 200);
+  const firstVisitorReviews = await firstVisitorResponse.json();
+  assert.ok(
+    firstVisitorReviews.comments.some(
+      (review) => review.id === saved.review.id,
+    ),
+  );
 
   const pendingWithoutKey = await fetch(`${baseUrl}/api/comments/pending`);
   assert.equal(pendingWithoutKey.status, 401);
 
-  const pendingResponse = await fetch(`${baseUrl}/api/comments/pending`, {
-    headers: { "X-Admin-Key": adminApiKey },
-  });
-  assert.equal(pendingResponse.status, 200);
-  assert.equal((await pendingResponse.json()).comments[0].id, saved.review.id);
-
-  const approval = await fetch(
-    `${baseUrl}/api/comments/${encodeURIComponent(saved.review.id)}/approve`,
-    {
-      method: "POST",
-      headers: { "X-Admin-Key": adminApiKey },
-    },
+  const laterVisitorResponse = await fetch(`${baseUrl}/api/comments`);
+  const laterVisitorReviews = await laterVisitorResponse.json();
+  const publishedReview = laterVisitorReviews.comments.find(
+    (review) => review.id === saved.review.id,
   );
-  assert.equal(approval.status, 200);
-
-  const published = await fetch(`${baseUrl}/api/comments`);
-  const publishedReview = (await published.json()).comments[0];
+  assert.ok(publishedReview);
   assert.equal(publishedReview.id, saved.review.id);
   assert.equal(publishedReview.location, "Banjul");
   assert.equal(publishedReview.rating, 5);
   assert.equal(publishedReview.avatar, "data:image/jpeg;base64,/9j/AA==");
 });
 
-test("allows admins to reject pending reviews and validates ratings", async () => {
+test("does not publish invalid reviews and validates ratings", async () => {
   const invalid = await fetch(`${baseUrl}/api/comments`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       name: "Reviewer",
       rating: 0,
-      comment: "Great work!",
+      comment: "Invalid rating must not persist.",
     }),
   });
   assert.equal(invalid.status, 400);
 
-  const submission = await fetch(`${baseUrl}/api/comments`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      name: "Reviewer",
-      rating: 4,
-      comment: "Needs a small touch-up.",
-    }),
-  });
-  const { review } = await submission.json();
-
-  const rejected = await fetch(`${baseUrl}/api/comments/${review.id}`, {
-    method: "DELETE",
-    headers: { "X-Admin-Key": adminApiKey },
-  });
-  assert.equal(rejected.status, 204);
-
-  const pending = await fetch(`${baseUrl}/api/comments/pending`, {
-    headers: { "X-Admin-Key": adminApiKey },
-  });
-  assert.deepEqual((await pending.json()).comments, []);
+  const publicReviews = await fetch(`${baseUrl}/api/comments`);
+  assert.ok(
+    !(await publicReviews.json()).comments.some(
+      (review) => review.comment === "Invalid rating must not persist.",
+    ),
+  );
 });
 
 test("rejects comment submissions without required fields", async () => {

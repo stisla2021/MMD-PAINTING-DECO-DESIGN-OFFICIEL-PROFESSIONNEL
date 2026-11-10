@@ -384,7 +384,7 @@ async function getComments(request, env) {
     avatar,
     comment: comment.value,
     createdAt: new Date().toISOString(),
-    status: "pending",
+    status: "approved",
   };
   await env.DB.prepare(
     `INSERT INTO comments
@@ -403,7 +403,7 @@ async function getComments(request, env) {
     )
     .run();
   return jsonResponse(
-    { message: "Review submitted for approval.", review: entry },
+    { message: "Review submitted and published.", review: entry },
     201,
   );
 }

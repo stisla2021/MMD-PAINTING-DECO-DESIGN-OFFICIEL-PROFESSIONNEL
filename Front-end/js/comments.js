@@ -261,12 +261,26 @@ commentForm.addEventListener("submit", async (event) => {
             }
             throw new Error(message);
         }
+        const result = await response.json();
+        if (typeof result !== "object" ||
+            result === null ||
+            !("review" in result)) {
+            throw new Error("The server returned a review in an unexpected format.");
+        }
+        const submittedReview = result.review;
+        if (!isCustomerComment(submittedReview)) {
+            throw new Error("The server returned a review in an unexpected format.");
+        }
+        onlineComments = [
+            submittedReview,
+            ...onlineComments.filter((entry) => entry.id !== submittedReview.id),
+        ];
         commentForm.reset();
         renderComments([
             ...displayedComments.filter((entry) => entry.id.startsWith("local-")),
             ...onlineComments,
         ]);
-        window.mmdSetTranslatedText(reviewStatus, "Thank you. Your review will appear after owner approval.");
+        window.mmdSetTranslatedText(reviewStatus, "Thank you. Your review has been published.");
     }
     catch (error) {
         console.error("Could not submit the review:", error);

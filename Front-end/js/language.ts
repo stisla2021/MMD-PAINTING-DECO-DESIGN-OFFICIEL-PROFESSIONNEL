@@ -269,8 +269,8 @@ const mmdFrenchTranslations: Record<string, string> = {
   "Reviews from Our Customers": "Avis de nos clients",
   "Reviews are shared with everyone who visits this page.":
     "Les avis sont visibles par tous les visiteurs de cette page.",
-  "Approved reviews are shared with everyone. New reviews are published after owner approval.":
-    "Les avis approuvés sont visibles par tous. Les nouveaux avis sont publiés après validation par le propriétaire.",
+  "New reviews are shared with everyone as soon as they are submitted.":
+    "Les nouveaux avis sont visibles par tous dès leur envoi.",
   "Leave a Review": "Laisser un avis",
   "Tell us about your painting project.": "Parlez-nous de votre projet de peinture.",
   "Your Name *": "Votre nom *",
@@ -279,8 +279,8 @@ const mmdFrenchTranslations: Record<string, string> = {
     "Choisissez un avatar emoji (facultatif)",
   "Upload a photo instead (optional)":
     "Télécharger une photo à la place (facultatif)",
-  "Photos are cropped and resized before submission. The photo is shared with your review only after owner approval. Choose an image up to 5 MB.":
-    "Les photos sont recadrées et redimensionnées avant l'envoi. La photo n'est partagée avec votre avis qu'après validation par le propriétaire. Choisissez une image de 5 Mo maximum.",
+  "Photos are cropped and resized before submission. The photo is shared with your review. Choose an image up to 5 MB.":
+    "Les photos sont recadrées et redimensionnées avant l'envoi. La photo est partagée avec votre avis. Choisissez une image de 5 Mo maximum.",
   "Preparing your photo...": "Préparation de votre photo...",
   "Could not use that photo. Choose an image up to 5 MB.":
     "Impossible d'utiliser cette photo. Choisissez une image de 5 Mo maximum.",
@@ -296,8 +296,8 @@ const mmdFrenchTranslations: Record<string, string> = {
     "Aucun avis pour le moment. Soyez le premier à partager votre expérience.",
   "Loading reviews...": "Chargement des avis...",
   "Submitting your review...": "Envoi de votre avis...",
-  "Thank you. Your review will appear after owner approval.":
-    "Merci. Votre avis apparaîtra après validation par le propriétaire.",
+  "Thank you. Your review has been published.":
+    "Merci. Votre avis a été publié.",
   "Saving your review on this device...":
     "Enregistrement de votre avis sur cet appareil...",
   "Your review is saved on this device. Other visitors will not see it.":

@@ -337,7 +337,7 @@ test("protects the quote inbox and returns saved requests to admins", async () =
   });
 });
 
-test("holds new reviews for approval and publishes them after moderation", async () => {
+test("publishes new reviews immediately and keeps them visible to future visitors", async () => {
   const env = createEnvironment();
   const response = await onRequest({
     request: makeRequest("/api/comments", {
@@ -355,13 +355,14 @@ test("holds new reviews for approval and publishes them after moderation", async
   });
   assert.equal(response.status, 201);
   const { review } = await response.json();
-  assert.equal(review.status, "pending");
+  assert.equal(review.status, "approved");
 
   const publicBeforeApproval = await onRequest({
     request: makeRequest("/api/comments"),
     env,
   });
-  assert.deepEqual((await publicBeforeApproval.json()).comments, []);
+  const firstVisitorReviews = await publicBeforeApproval.json();
+  assert.ok(firstVisitorReviews.comments.some((entry) => entry.id === review.id));
 
   const pendingWithoutKey = await onRequest({
     request: makeRequest("/api/comments/pending"),
@@ -369,37 +370,21 @@ test("holds new reviews for approval and publishes them after moderation", async
   });
   assert.equal(pendingWithoutKey.status, 401);
 
-  const pending = await onRequest({
-    request: makeRequest("/api/comments/pending", {
-      headers: { "X-Admin-Key": adminApiKey },
-    }),
-    env,
-  });
-  const pendingReview = (await pending.json()).comments[0];
-  assert.equal(pendingReview.comment, "Great work!");
-  assert.equal(pendingReview.avatar, sharedPhotoAvatar);
-
-  const approved = await onRequest({
-    request: makeRequest(`/api/comments/${review.id}/approve`, {
-      method: "POST",
-      headers: { "X-Admin-Key": adminApiKey },
-    }),
-    env,
-  });
-  assert.equal(approved.status, 200);
-
-  const publicAfterApproval = await onRequest({
+  const publicForLaterVisitor = await onRequest({
     request: makeRequest("/api/comments"),
     env,
   });
-  const publishedReview = (await publicAfterApproval.json()).comments[0];
+  const publishedReview = (await publicForLaterVisitor.json()).comments.find(
+    (entry) => entry.id === review.id,
+  );
+  assert.ok(publishedReview);
   assert.equal(publishedReview.comment, "Great work!");
   assert.equal(publishedReview.location, "Banjul");
   assert.equal(publishedReview.rating, 5);
   assert.equal(publishedReview.avatar, sharedPhotoAvatar);
 });
 
-test("rejects pending reviews and validates review ratings", async () => {
+test("rejects invalid reviews and validates review ratings", async () => {
   const env = createEnvironment();
   const invalid = await onRequest({
     request: makeRequest("/api/comments", {
@@ -414,28 +399,6 @@ test("rejects pending reviews and validates review ratings", async () => {
     env,
   });
   assert.equal(invalid.status, 400);
-
-  const submitted = await onRequest({
-    request: makeRequest("/api/comments", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        name: "Reviewer",
-        rating: 4,
-        comment: "Needs a small touch-up.",
-      }),
-    }),
-    env,
-  });
-  const { review } = await submitted.json();
-  const rejected = await onRequest({
-    request: makeRequest(`/api/comments/${review.id}`, {
-      method: "DELETE",
-      headers: { "X-Admin-Key": adminApiKey },
-    }),
-    env,
-  });
-  assert.equal(rejected.status, 204);
   assert.deepEqual(env.tables.comments, []);
 });
 

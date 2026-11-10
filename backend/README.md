@@ -69,8 +69,8 @@ Returns saved quote requests newest first. This endpoint requires the configured
 Requires `name` (up to 100 characters), `rating` (an integer from 1 to 5), and
 `comment` (up to 2,000 characters). `location` is optional (up to 100
 characters), and `avatar` may be one of the site's emoji choices or a resized
-JPEG photo. Returns `201 Created`; new reviews are saved with `pending` status
-and are not shown publicly until approved.
+JPEG photo. Returns `201 Created`; new reviews are saved with `approved` status
+and shown publicly as soon as they are submitted.
 
 ```json
 {
@@ -84,20 +84,16 @@ and are not shown publicly until approved.
 
 ### `GET /api/comments`
 
-Returns approved reviews newest first. Existing local reviews without a status
-remain visible for compatibility.
+Returns published reviews newest first.
 
-The protected `GET /api/comments/pending` endpoint returns reviews awaiting
-approval. Use the `X-Admin-Key` header for this endpoint and for
-`POST /api/comments/:id/approve`. `DELETE /api/comments/:id` permanently
-rejects and removes a pending review. These controls are available on
+The protected `GET /api/comments/pending` endpoint and approval/rejection
+routes remain available for any reviews already awaiting moderation. Use the
+`X-Admin-Key` header for these endpoints. These controls are available on
 `Front-end/admin.html`.
 
 The public review form resizes photos to small JPEG avatars before submission.
-The owner reviews the rating, name, optional location, comment, and avatar in the
-admin dashboard before publishing it. On Cloudflare, review records (including
-the compact avatar data) are stored in D1; local development stores them in
-`data/comments.json`.
+On Cloudflare, review records (including the compact avatar data) are stored in
+D1; local development stores them in `data/comments.json`.
 
 `GET /api/health` returns `{ "status": "ok" }`. API requests are limited to 100
 per IP address per 15 minutes; JSON request bodies are limited to 48 KB.
