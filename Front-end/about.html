@@ -7,6 +7,8 @@
     <meta name="description" content="Learn about MMD PAINTING and our painting, decoration, and design services for homes and businesses.">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#0f2c59">
 </head>
 <body>
     <header>
@@ -32,6 +34,8 @@
                     </li>
                 </ul>
 
+                <button type="button" class="install-app-button" id="installAppButton" hidden>Install app</button>
+                <span class="install-status" id="installAppStatus" role="status" aria-live="polite" hidden></span>
                 <div class="hamburger" id="hamburger">
                     <span></span>
                     <span></span>
@@ -185,5 +189,6 @@
 
     <script src="js/language.js" defer></script>
     <script src="js/main.js" defer></script>
+    <script src="js/pwa.js" defer></script>
 </body>
 </html>

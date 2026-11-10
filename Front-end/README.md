@@ -48,6 +48,11 @@ Projects gallery is loaded from the backend, and the admin page can publish
 photos that appear there.
 Social-profile icons in the public-page footers link to WhatsApp, Facebook,
 Instagram, and TikTok. Update those footer links if a profile changes.
+The public pages are installable as an Android PWA using
+`manifest.webmanifest`, `service-worker.js`, and the `app-icon-*.png` files.
+Open the site in Chrome on Android and choose **Install app** or **Add to Home
+screen**. The app shell works offline after it has loaded once; API features
+still require an internet connection.
 
 The full supplied design image is preserved as `images/mmd-deco-brand-poster.png`.
 

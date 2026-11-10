@@ -15,6 +15,7 @@ const contentTypes = new Map([
   [".png", "image/png"],
   [".svg", "image/svg+xml"],
   [".webp", "image/webp"],
+  [".webmanifest", "application/manifest+json; charset=utf-8"],
 ]);
 const port = Number(process.env.FRONTEND_PORT ?? 8000);
 const host = process.env.FRONTEND_HOST ?? "0.0.0.0";

@@ -7,6 +7,8 @@
     <meta name="description" content="MMD PAINTING provides interior and exterior painting, decoration, and design for homes and businesses in The Gambia and Senegal.">
     <link rel="stylesheet" href="style.css">
     <link rel="icon" type="image/svg+xml" href="images/favicon.svg">
+    <link rel="manifest" href="manifest.webmanifest">
+    <meta name="theme-color" content="#0f2c59">
 </head>
 <body>
 
@@ -33,6 +35,8 @@
                     </li>
                 </ul>
 
+                <button type="button" class="install-app-button" id="installAppButton" hidden>Install app</button>
+                <span class="install-status" id="installAppStatus" role="status" aria-live="polite" hidden></span>
                 <div class="hamburger" id="hamburger">
                     <span></span>
                     <span></span>
@@ -143,6 +147,13 @@
             </div>
         </div>
     </section>
+
+    <section class="install-app-info">
+        <div class="container">
+            <h2>Install MMD DECO on Your Android Phone</h2>
+            <p>Open this website in Chrome on your phone and tap Install app when it appears. If you do not see the button, open Chrome’s menu and choose Install app or Add to Home screen.</p>
+        </div>
+    </section>
     </main>
 
     <!-- FOOTER -->
@@ -197,6 +208,7 @@
 
     <script src="js/language.js" defer></script>
     <script src="js/main.js" defer></script>
+    <script src="js/pwa.js" defer></script>
     <script src="js/api.js" defer></script>
     <script src="js/works.js" defer></script>
 </body>
