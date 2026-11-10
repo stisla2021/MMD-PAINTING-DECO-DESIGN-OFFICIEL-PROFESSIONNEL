@@ -46,6 +46,9 @@ The header and footer logo is `images/mmd-deco-logo.svg`, with
 `images/favicon.svg` used as the site icon. The home-page Recent
 Projects gallery is loaded from the backend, and the admin page can publish
 photos that appear there.
+Cloudflare Pages security response headers are configured in `_headers`;
+review its content security policy if adding external scripts, fonts, embeds,
+or API hosts.
 Social-profile icons in the public-page footers link to WhatsApp, Facebook,
 Instagram, and TikTok. Update those footer links if a profile changes.
 
