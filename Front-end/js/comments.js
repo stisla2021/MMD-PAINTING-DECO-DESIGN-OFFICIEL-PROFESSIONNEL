@@ -4,6 +4,9 @@ const reviewStorageKey = "mmd-customer-reviews-v1";
 const commentForm = document.getElementById("commentForm");
 const commentsList = document.getElementById("commentsList");
 const commentStatus = document.getElementById("commentStatus");
+const reviewAvatarChoices = ["🙂", "😊", "😎", "🤗", "🎨", "🏠", "🌟"];
+const maximumAvatarPhotoSize = 5 * 1024 * 1024;
+const maximumAvatarDataUrlLength = 32000;
 if (!(commentForm instanceof HTMLFormElement)) {
     throw new Error('The review form is missing the "#commentForm" element.');
 }
@@ -19,10 +22,62 @@ let displayedComments = [];
 let onlineComments = [];
 const reviewerName = commentForm.querySelector("#reviewerName");
 const reviewerLocation = commentForm.querySelector("#reviewerLocation");
+const reviewerPhoto = commentForm.querySelector("#reviewerPhoto");
 const commentText = commentForm.querySelector("#commentText");
 const commentSubmitButton = commentForm.querySelector('button[type="submit"]');
-if (!reviewerName || !reviewerLocation || !commentText) {
-    throw new Error("The review form is missing a name, location, or comment field.");
+if (!reviewerName || !reviewerLocation || !reviewerPhoto || !commentText) {
+    throw new Error("The review form is missing a name, location, photo, or comment field.");
+}
+function isReviewAvatar(value) {
+    if (typeof value !== "string") {
+        return false;
+    }
+    if (reviewAvatarChoices.includes(value)) {
+        return true;
+    }
+    return (value.length <= maximumAvatarDataUrlLength &&
+        /^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(value));
+}
+function resizeAvatarPhoto(file) {
+    if (!file.type.startsWith("image/") || file.size > maximumAvatarPhotoSize) {
+        return Promise.reject(new Error("Could not use that photo. Choose an image up to 5 MB."));
+    }
+    return new Promise((resolve, reject) => {
+        const image = new Image();
+        const objectUrl = URL.createObjectURL(file);
+        const releaseObjectUrl = () => URL.revokeObjectURL(objectUrl);
+        image.addEventListener("load", () => {
+            releaseObjectUrl();
+            try {
+                const cropSize = Math.min(image.naturalWidth, image.naturalHeight);
+                if (cropSize < 1 ||
+                    image.naturalWidth * image.naturalHeight > 25000000) {
+                    throw new Error("The selected photo has invalid dimensions.");
+                }
+                const canvas = document.createElement("canvas");
+                canvas.width = 96;
+                canvas.height = 96;
+                const context = canvas.getContext("2d");
+                if (!context) {
+                    throw new Error("Could not prepare the selected photo.");
+                }
+                context.drawImage(image, (image.naturalWidth - cropSize) / 2, (image.naturalHeight - cropSize) / 2, cropSize, cropSize, 0, 0, canvas.width, canvas.height);
+                const avatar = canvas.toDataURL("image/jpeg", 0.72);
+                if (avatar.length > maximumAvatarDataUrlLength) {
+                    throw new Error("The resized photo is still too large.");
+                }
+                resolve(avatar);
+            }
+            catch (error) {
+                reject(error);
+            }
+        }, { once: true });
+        image.addEventListener("error", () => {
+            releaseObjectUrl();
+            reject(new Error("Could not use that photo. Choose an image up to 5 MB."));
+        }, { once: true });
+        image.src = objectUrl;
+    });
 }
 function isCustomerComment(value) {
     if (typeof value !== "object" || value === null) {
@@ -32,6 +87,7 @@ function isCustomerComment(value) {
     return (typeof record.id === "string" &&
         typeof record.name === "string" &&
         (record.location === undefined || typeof record.location === "string") &&
+        (record.avatar === undefined || isReviewAvatar(record.avatar)) &&
         (record.rating === undefined ||
             (typeof record.rating === "number" &&
                 Number.isInteger(record.rating) &&
@@ -96,8 +152,22 @@ function renderComments(comments) {
             ? ""
             : parsedDate.toLocaleDateString(window.mmdLanguage() === "fr" ? "fr-FR" : "en-US");
         byline.textContent = [comment.location, date].filter(Boolean).join(" · ");
+        const avatar = document.createElement("span");
+        avatar.className = "review-avatar";
+        avatar.setAttribute("aria-hidden", "true");
+        if (comment.avatar?.startsWith("data:image/jpeg;base64,")) {
+            const photo = document.createElement("img");
+            photo.src = comment.avatar;
+            photo.alt = "";
+            avatar.append(photo);
+        }
+        else {
+            avatar.textContent = isReviewAvatar(comment.avatar)
+                ? comment.avatar
+                : reviewAvatarChoices[0];
+        }
         details.append(name, byline);
-        author.append(details);
+        author.append(avatar, details);
         card.append(text, author);
         reviewList.append(card);
     }
@@ -132,13 +202,15 @@ async function loadComments() {
         window.mmdSetTranslatedText(reviewStatus, "Online reviews are unavailable. Reviews submitted here will only be saved in this browser.");
     }
 }
-commentForm.addEventListener("submit", (event) => {
+commentForm.addEventListener("submit", async (event) => {
     event.preventDefault();
     const name = reviewerName.value.trim();
     const location = reviewerLocation.value.trim();
     const ratingField = commentForm.querySelector('input[name="rating"]:checked');
     const rating = ratingField ? Number(ratingField.value) : NaN;
     const comment = commentText.value.trim();
+    const selectedAvatar = commentForm.querySelector('input[name="avatar"]:checked');
+    const photoFile = reviewerPhoto.files?.[0];
     if (!name ||
         !comment ||
         !Number.isInteger(rating) ||
@@ -147,16 +219,27 @@ commentForm.addEventListener("submit", (event) => {
         window.mmdSetTranslatedText(reviewStatus, "Please enter your name, select a rating, and write a review.");
         return;
     }
-    if (commentSubmitButton) {
+    if (commentSubmitButton)
         commentSubmitButton.disabled = true;
-    }
-    window.mmdSetTranslatedText(reviewStatus, "Saving your review on this device...");
+    let preparingPhoto = false;
     try {
+        let avatar = selectedAvatar?.value ?? reviewAvatarChoices[0];
+        if (photoFile) {
+            preparingPhoto = true;
+            window.mmdSetTranslatedText(reviewStatus, "Preparing your photo...");
+            avatar = await resizeAvatarPhoto(photoFile);
+            preparingPhoto = false;
+        }
+        window.mmdSetTranslatedText(reviewStatus, "Saving your review on this device...");
         const savedComments = readStoredComments();
+        if (!isReviewAvatar(avatar)) {
+            throw new Error("The selected avatar is invalid.");
+        }
         const newComment = {
             id: `local-${crypto.randomUUID()}`,
             name,
             ...(location ? { location } : {}),
+            avatar,
             rating,
             comment,
             createdAt: new Date().toISOString(),
@@ -169,12 +252,13 @@ commentForm.addEventListener("submit", (event) => {
     }
     catch (error) {
         console.error("Could not save review in this browser:", error);
-        window.mmdSetTranslatedText(reviewStatus, "Could not save your review in this browser. Check storage availability and try again.");
+        window.mmdSetTranslatedText(reviewStatus, preparingPhoto
+            ? "Could not use that photo. Choose an image up to 5 MB."
+            : "Could not save your review in this browser. Check storage availability and try again.");
     }
     finally {
-        if (commentSubmitButton) {
+        if (commentSubmitButton)
             commentSubmitButton.disabled = false;
-        }
     }
 });
 void loadComments();

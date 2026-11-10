@@ -74,10 +74,11 @@ and R2 for project images.
 - The form shows a confirmation and resets after a saved request, or reports an
   error if the API is unavailable
 - Existing online comments are read from `/api/comments`. New reviews include a
-  name, optional location, 1-5 star rating, and comment, and are saved in that
-  visitor's browser with localStorage. Browser-saved reviews are not visible to
-  other visitors; online submissions require adding a review API that supports
-  rating and location.
+  name, optional location, 1-5 star rating, comment, and an emoji or optional
+  photo avatar. Photos are cropped and resized before being saved with the
+  review in that visitor's browser using localStorage. Browser-saved reviews and
+  avatars are not visible to other visitors; shared submissions require a
+  review API that supports rating, location, and avatar moderation.
 - The protected admin page lists quote requests and manages recent-work photos;
   enter the `ADMIN_API_KEY` configured in `../backend/.env` for local use or
   Cloudflare Pages secrets for production

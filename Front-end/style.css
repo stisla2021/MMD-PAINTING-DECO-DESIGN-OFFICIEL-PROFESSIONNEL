@@ -814,6 +814,26 @@ section {
     margin-bottom: 12px;
 }
 
+.testimonial-card .client .review-avatar {
+    display: grid;
+    flex: 0 0 52px;
+    width: 52px;
+    height: 52px;
+    place-items: center;
+    overflow: hidden;
+    border: 3px solid white;
+    border-radius: 50%;
+    background: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-size: 1.6rem;
+}
+
+.review-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
 .testimonial-card .review-location {
     color: var(--gray);
     font-size: 0.9rem;
@@ -839,6 +859,7 @@ section {
     margin: 0 auto;
 }
 
+.review-avatar-field,
 .rating-field {
     border: 0;
     padding: 0;
@@ -856,6 +877,61 @@ section {
     flex-direction: row-reverse;
     justify-content: flex-end;
     width: fit-content;
+}
+
+.review-avatar-field legend {
+    margin-bottom: 8px;
+    color: var(--primary);
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.review-avatar-options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.review-avatar-options input[type="radio"] {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.review-avatar-options label {
+    display: grid;
+    width: 46px;
+    height: 46px;
+    margin: 0;
+    place-items: center;
+    border: 2px solid #e2e8f0;
+    border-radius: 50%;
+    background: white;
+    cursor: pointer;
+    font-size: 1.35rem;
+}
+
+.review-avatar-options input[type="radio"]:checked + label {
+    border-color: var(--accent);
+    background: #fff7ed;
+}
+
+.review-avatar-options input[type="radio"]:focus-visible + label {
+    outline: 2px solid var(--primary);
+    outline-offset: 3px;
+}
+
+.review-photo-help {
+    margin: 8px 0 0;
+    color: var(--gray);
+    font-size: 0.9rem;
+    line-height: 1.5;
 }
 
 .rating-field .rating-options input[type="radio"] {

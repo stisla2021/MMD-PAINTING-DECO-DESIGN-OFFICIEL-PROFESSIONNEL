@@ -93,6 +93,30 @@
                             <label for="reviewerLocation">Location (optional)</label>
                             <input type="text" id="reviewerLocation" name="location" maxlength="100" autocomplete="address-level2">
                         </div>
+                        <fieldset class="form-group review-avatar-field">
+                            <legend>Choose an emoji avatar (optional)</legend>
+                            <div class="review-avatar-options">
+                                <input type="radio" id="avatar-smile" name="avatar" value="🙂" checked>
+                                <label for="avatar-smile" aria-label="Smiling face">🙂</label>
+                                <input type="radio" id="avatar-happy" name="avatar" value="😊">
+                                <label for="avatar-happy" aria-label="Happy face">😊</label>
+                                <input type="radio" id="avatar-cool" name="avatar" value="😎">
+                                <label for="avatar-cool" aria-label="Cool face">😎</label>
+                                <input type="radio" id="avatar-hug" name="avatar" value="🤗">
+                                <label for="avatar-hug" aria-label="Hugging face">🤗</label>
+                                <input type="radio" id="avatar-paint" name="avatar" value="🎨">
+                                <label for="avatar-paint" aria-label="Artist palette">🎨</label>
+                                <input type="radio" id="avatar-home" name="avatar" value="🏠">
+                                <label for="avatar-home" aria-label="Home">🏠</label>
+                                <input type="radio" id="avatar-star" name="avatar" value="🌟">
+                                <label for="avatar-star" aria-label="Glowing star">🌟</label>
+                            </div>
+                        </fieldset>
+                        <div class="form-group">
+                            <label for="reviewerPhoto">Upload a photo instead (optional)</label>
+                            <input type="file" id="reviewerPhoto" name="photo" accept="image/*" aria-describedby="reviewPhotoHelp">
+                            <p id="reviewPhotoHelp" class="review-photo-help">Photos are cropped and resized before being saved with this review in this browser; other visitors will not see them. Choose an image up to 5 MB.</p>
+                        </div>
                         <fieldset class="form-group rating-field">
                             <legend>Rating *</legend>
                             <div class="rating-options">

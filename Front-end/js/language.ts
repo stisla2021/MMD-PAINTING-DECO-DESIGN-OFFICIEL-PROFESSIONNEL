@@ -256,6 +256,15 @@ const mmdFrenchTranslations: Record<string, string> = {
   "Tell us about your painting project.": "Parlez-nous de votre projet de peinture.",
   "Your Name *": "Votre nom *",
   "Location (optional)": "Localisation (facultatif)",
+  "Choose an emoji avatar (optional)":
+    "Choisissez un avatar emoji (facultatif)",
+  "Upload a photo instead (optional)":
+    "Télécharger une photo à la place (facultatif)",
+  "Photos are cropped and resized before being saved with this review in this browser; other visitors will not see them. Choose an image up to 5 MB.":
+    "Les photos sont recadrées et redimensionnées avant d'être enregistrées avec cet avis dans ce navigateur ; les autres visiteurs ne les verront pas. Choisissez une image de 5 Mo maximum.",
+  "Preparing your photo...": "Préparation de votre photo...",
+  "Could not use that photo. Choose an image up to 5 MB.":
+    "Impossible d'utiliser cette photo. Choisissez une image de 5 Mo maximum.",
   "Rating *": "Note *",
   "5 stars": "5 étoiles",
   "4 stars": "4 étoiles",
