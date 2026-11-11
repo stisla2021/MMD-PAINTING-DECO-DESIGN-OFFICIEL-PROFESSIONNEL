@@ -65,6 +65,19 @@ folder. `wrangler.jsonc` points D1 migrations at `backend/migrations/`.
 Cloudflare Pages security response headers are configured in `_headers`;
 review its content security policy if adding external scripts, fonts, embeds,
 or API hosts.
+
+## Google Search
+
+The homepage includes `WebSite` and `Organization` JSON-LD, and the sitemap is
+available at `/sitemap.xml`; `robots.txt` points crawlers to it and excludes
+the JSON API. After deployment, submit
+`https://mmd-painting-deco-design.pages.dev/sitemap.xml` in Google Search
+Console. These files help Google understand and crawl the site but do not
+guarantee rankings. Local ranking also depends on a complete, verified Google
+Business Profile and accurate business information. Add a street address,
+service-area towns, or opening hours to structured data only after confirming
+the details.
+
 Social-profile icons in the public-page footers link to WhatsApp, Facebook,
 Instagram, and TikTok. Update those footer links if a profile changes.
 
