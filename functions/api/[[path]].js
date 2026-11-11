@@ -31,8 +31,13 @@ const quoteAlertRecipient = "mustaphajallow534@gmail.com";
 const quoteAdminUrl = "https://mmd-painting-deco-design.pages.dev/admin";
 const apiSecurityHeaders = {
   "Cache-Control": "no-store",
+  "Content-Security-Policy": "default-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+  "Cross-Origin-Opener-Policy": "same-origin",
+  "Cross-Origin-Resource-Policy": "same-origin",
+  "Strict-Transport-Security": "max-age=31536000; includeSubDomains",
   "X-Content-Type-Options": "nosniff",
   "X-Frame-Options": "DENY",
+  "X-Permitted-Cross-Domain-Policies": "none",
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
 };
@@ -940,13 +945,13 @@ function validateMutationOrigin(request) {
 export async function onRequest({ request, env }) {
   const url = new URL(request.url);
   try {
-    const rateLimitResponse = await enforceRateLimit(request, env);
-    if (rateLimitResponse) {
-      return rateLimitResponse;
-    }
     const originError = validateMutationOrigin(request);
     if (originError) {
       return originError;
+    }
+    const rateLimitResponse = await enforceRateLimit(request, env);
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     if (url.pathname === "/api/health") {

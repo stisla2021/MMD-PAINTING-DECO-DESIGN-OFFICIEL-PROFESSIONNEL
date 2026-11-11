@@ -293,6 +293,7 @@ function createEnvironment() {
     ADMIN_API_KEY: adminApiKey,
     tables,
     images,
+    rateLimits,
   };
 }
 
@@ -339,6 +340,11 @@ test("serves the Google verification token directly at its required URL", async 
     "google-site-verification: google16df5d513870464f.html\n",
   );
   assert.equal(response.headers.get("content-type"), "text/html; charset=utf-8");
+  assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(
+    response.headers.get("strict-transport-security"),
+    "max-age=31536000; includeSubDomains",
+  );
 
   const unsupportedMethod = await serveGoogleVerificationFile({
     request: new Request("https://example.com/google16df5d513870464f.html", {
@@ -346,6 +352,7 @@ test("serves the Google verification token directly at its required URL", async 
     }),
   });
   assert.equal(unsupportedMethod.status, 405);
+  assert.equal(unsupportedMethod.headers.get("x-frame-options"), "DENY");
 });
 
 test("accepts valid quotes and serves the health endpoint", async () => {
@@ -659,6 +666,7 @@ test("holds new reviews for admin approval and lets admins delete published revi
 });
 
 test("blocks cross-origin API mutations and non-JSON submissions", async () => {
+  const env = createEnvironment();
   const crossOrigin = await onRequest({
     request: makeRequest("/api/comments", {
       method: "POST",
@@ -673,9 +681,10 @@ test("blocks cross-origin API mutations and non-JSON submissions", async () => {
         comment: "Should not be accepted.",
       }),
     }),
-    env: createEnvironment(),
+    env,
   });
   assert.equal(crossOrigin.status, 403);
+  assert.equal(env.rateLimits.size, 0);
 
   const wrongContentType = await onRequest({
     request: makeRequest("/api/comments", {
@@ -690,9 +699,10 @@ test("blocks cross-origin API mutations and non-JSON submissions", async () => {
         comment: "Should not be accepted.",
       }),
     }),
-    env: createEnvironment(),
+    env,
   });
   assert.equal(wrongContentType.status, 415);
+  assert.equal(env.rateLimits.size, 1);
 });
 
 test("applies security headers and no-store caching to API responses", async () => {
@@ -702,8 +712,19 @@ test("applies security headers and no-store caching to API responses", async () 
     env,
   });
   assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.equal(
+    response.headers.get("content-security-policy"),
+    "default-src 'none'; base-uri 'none'; frame-ancestors 'none'",
+  );
+  assert.equal(response.headers.get("cross-origin-opener-policy"), "same-origin");
+  assert.equal(response.headers.get("cross-origin-resource-policy"), "same-origin");
+  assert.equal(
+    response.headers.get("strict-transport-security"),
+    "max-age=31536000; includeSubDomains",
+  );
   assert.equal(response.headers.get("x-content-type-options"), "nosniff");
   assert.equal(response.headers.get("x-frame-options"), "DENY");
+  assert.equal(response.headers.get("x-permitted-cross-domain-policies"), "none");
   assert.equal(
     response.headers.get("referrer-policy"),
     "strict-origin-when-cross-origin",
@@ -750,14 +771,34 @@ test("protects work uploads and stores, serves, and deletes published images", a
   assert.equal(uploaded.status, 201);
   const { work } = await uploaded.json();
   assert.equal(env.tables.works.length, 1);
-  assert.ok(env.images.has(work.imageUrl.slice("/uploads/".length)));
+  const imageKey = work.imageUrl.slice("/uploads/".length);
+  assert.ok(env.images.has(imageKey));
+  env.images.get(imageKey).contentType = "text/html";
 
   const image = await serveUpload({
-    params: { key: work.imageUrl.slice("/uploads/".length) },
+    params: { key: imageKey },
     env,
   });
   assert.equal(image.status, 200);
   assert.equal(image.headers.get("content-type"), "image/png");
+  assert.equal(image.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(image.headers.get("cross-origin-resource-policy"), "same-origin");
+
+  const nonV4Image = await serveUpload({
+    params: { key: "123e4567-e89b-12d3-a456-426614174000.png" },
+    env: {
+      ...env,
+      WORK_IMAGES: {
+        async get() {
+          return {
+            body: new Blob(["image"]).stream(),
+            httpMetadata: { contentType: "image/png" },
+          };
+        },
+      },
+    },
+  });
+  assert.equal(nonV4Image.status, 404);
 
   const deleted = await onRequest({
     request: makeRequest(`/api/works/${work.id}`, {
@@ -836,10 +877,11 @@ test("reports disabled work uploads when the R2 binding is unavailable", async (
   assert.equal(uploadResponse.status, 503);
 
   const imageResponse = await serveUpload({
-    params: { key: "123e4567-e89b-12d3-a456-426614174000.png" },
+    params: { key: "123e4567-e89b-42d3-a456-426614174000.png" },
     env,
   });
   assert.equal(imageResponse.status, 503);
+  assert.equal(imageResponse.headers.get("cache-control"), "no-store");
 });
 
 test("limits API requests by client IP", async () => {
