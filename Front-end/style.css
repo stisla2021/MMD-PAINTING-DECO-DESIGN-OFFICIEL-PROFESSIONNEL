@@ -1139,6 +1139,15 @@ section {
     outline-offset: 3px;
 }
 
+.contact-submit-button {
+    width: 100%;
+}
+
+.service-quote-cta {
+    margin-top: 60px;
+    text-align: center;
+}
+
 .whatsapp-qr {
     margin: 20px 0 0;
     text-align: center;
@@ -1469,6 +1478,20 @@ footer {
 .admin-review-heading time {
     margin-left: auto;
     text-align: right;
+}
+
+.admin-review-status {
+    border-radius: 999px;
+    background: #e2e8f0;
+    color: var(--primary);
+    font-size: 0.8rem;
+    font-weight: 700;
+    padding: 5px 10px;
+}
+
+.admin-review-status.pending {
+    background: #fff3cd;
+    color: #664d03;
 }
 
 .admin-review-avatar {

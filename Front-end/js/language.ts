@@ -285,6 +285,18 @@ const mmdFrenchTranslations: Record<string, string> = {
   "Manage quote requests, customer reviews, and project photos":
     "Gérer les demandes de devis, les avis clients et les photos des projets",
   "Pending customer reviews": "Avis clients en attente",
+  "Customer reviews": "Avis clients",
+  "New reviews are hidden until an admin approves them.":
+    "Les nouveaux avis restent masqués jusqu'à leur approbation par un administrateur.",
+  "New reviews appear here after an admin approves them.":
+    "Les nouveaux avis apparaissent ici après approbation par un administrateur.",
+  "No customer reviews to manage.": "Aucun avis client à gérer.",
+  "Pending approval": "En attente d'approbation",
+  Published: "Publié",
+  Rejected: "Rejeté",
+  "Loading customer reviews...": "Chargement des avis clients...",
+  "Could not load customer reviews. {message}":
+    "Impossible de charger les avis clients. {message}",
   "Refresh reviews": "Actualiser les avis",
   "No reviews are waiting for approval.":
     "Aucun avis n'est en attente de validation.",
@@ -298,14 +310,15 @@ const mmdFrenchTranslations: Record<string, string> = {
   'Reject "{name}"\'s review?': "Rejeter l'avis de {name} ?",
   "Approving review...": "Validation de l'avis...",
   "Rejecting review...": "Rejet de l'avis...",
+  "Deleting review...": "Suppression de l'avis...",
   "Review approved and published.": "Avis approuvé et publié.",
   "Review rejected.": "Avis rejeté.",
+  "Review deleted.": "Avis supprimé.",
+  'Delete "{name}"\'s review?': "Supprimer l'avis de {name} ?",
   "Location: {location}": "Lieu : {location}",
   "Reviews from Our Customers": "Avis de nos clients",
   "Reviews are shared with everyone who visits this page.":
     "Les avis sont visibles par tous les visiteurs de cette page.",
-  "New reviews are shared with everyone as soon as they are submitted.":
-    "Les nouveaux avis sont visibles par tous dès leur envoi.",
   "Leave a Review": "Laisser un avis",
   "Tell us about your painting project.": "Parlez-nous de votre projet de peinture.",
   "Your Name *": "Votre nom *",
@@ -333,6 +346,8 @@ const mmdFrenchTranslations: Record<string, string> = {
   "Submitting your review...": "Envoi de votre avis...",
   "Thank you. Your review has been published.":
     "Merci. Votre avis a été publié.",
+  "Thank you. Your review was submitted and will appear after admin approval.":
+    "Merci. Votre avis a été envoyé et apparaîtra après approbation par un administrateur.",
   "Saving your review on this device...":
     "Enregistrement de votre avis sur cet appareil...",
   "Your review is saved on this device. Other visitors will not see it.":

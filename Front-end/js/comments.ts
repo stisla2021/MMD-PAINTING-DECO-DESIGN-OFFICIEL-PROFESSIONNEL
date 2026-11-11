@@ -12,6 +12,10 @@ interface CommentsResponse {
   comments: CustomerComment[];
 }
 
+interface ReviewSubmissionResponse {
+  review: CustomerComment & { status: "pending" };
+}
+
 const commentsApiUrl = window.mmdApiUrl("/api/comments");
 const reviewStorageKey = "mmd-customer-reviews-v1";
 const commentForm = document.getElementById("commentForm");
@@ -159,11 +163,24 @@ function isCommentsResponse(value: unknown): value is CommentsResponse {
   if (typeof value !== "object" || value === null) {
     return false;
   }
-
   const record = value as Record<string, unknown>;
   return (
     Array.isArray(record.comments) &&
     record.comments.every(isCustomerComment)
+  );
+}
+
+function isReviewSubmissionResponse(
+  value: unknown,
+): value is ReviewSubmissionResponse {
+  if (typeof value !== "object" || value === null || !("review" in value)) {
+    return false;
+  }
+  const review = value.review;
+  return (
+    isCustomerComment(review) &&
+    "status" in review &&
+    review.status === "pending"
   );
 }
 
@@ -372,31 +389,14 @@ commentForm.addEventListener("submit", async (event: SubmitEvent) => {
     }
 
     const result: unknown = await response.json();
-    if (
-      typeof result !== "object" ||
-      result === null ||
-      !("review" in result)
-    ) {
+    if (!isReviewSubmissionResponse(result)) {
       throw new Error("The server returned a review in an unexpected format.");
     }
 
-    const submittedReview = result.review;
-    if (!isCustomerComment(submittedReview)) {
-      throw new Error("The server returned a review in an unexpected format.");
-    }
-
-    onlineComments = [
-      submittedReview,
-      ...onlineComments.filter((entry) => entry.id !== submittedReview.id),
-    ];
     commentForm.reset();
-    renderComments([
-      ...displayedComments.filter((entry) => entry.id.startsWith("local-")),
-      ...onlineComments,
-    ]);
     window.mmdSetTranslatedText(
       reviewStatus,
-      "Thank you. Your review has been published.",
+      "Thank you. Your review was submitted and will appear after admin approval.",
     );
   } catch (error) {
     console.error("Could not submit the review:", error);

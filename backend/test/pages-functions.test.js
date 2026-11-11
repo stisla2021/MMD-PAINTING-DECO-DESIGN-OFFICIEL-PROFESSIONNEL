@@ -113,8 +113,7 @@ function createEnvironment() {
           }
           if (sql.startsWith("DELETE FROM comments")) {
             const review = tables.comments.find(
-              (comment) =>
-                comment.id === this.values[0] && comment.status === "pending",
+              (comment) => comment.id === this.values[0],
             );
             if (review) {
               tables.comments = tables.comments.filter(
@@ -130,9 +129,11 @@ function createEnvironment() {
           const sql = query.replace(/\s+/g, " ").trim();
           const records = sql.startsWith("SELECT id, name, location")
             ? tables.comments.filter((comment) =>
-                sql.includes("status = 'approved'")
+                sql.includes("WHERE status = 'approved'")
                   ? comment.status === "approved"
-                  : comment.status === "pending",
+                  : sql.includes("WHERE status = 'pending'")
+                    ? comment.status === "pending"
+                    : true,
               )
             : sql.startsWith("SELECT id, name, email, phone, service, message")
               ? tables.quotes
@@ -337,7 +338,7 @@ test("protects the quote inbox and returns saved requests to admins", async () =
   });
 });
 
-test("publishes new reviews immediately and keeps them visible to future visitors", async () => {
+test("holds new reviews for admin approval and lets admins delete published reviews", async () => {
   const env = createEnvironment();
   const response = await onRequest({
     request: makeRequest("/api/comments", {
@@ -355,20 +356,59 @@ test("publishes new reviews immediately and keeps them visible to future visitor
   });
   assert.equal(response.status, 201);
   const { review } = await response.json();
-  assert.equal(review.status, "approved");
+  assert.equal(review.status, "pending");
 
   const publicBeforeApproval = await onRequest({
     request: makeRequest("/api/comments"),
     env,
   });
   const firstVisitorReviews = await publicBeforeApproval.json();
-  assert.ok(firstVisitorReviews.comments.some((entry) => entry.id === review.id));
+  assert.ok(
+    !firstVisitorReviews.comments.some((entry) => entry.id === review.id),
+  );
 
   const pendingWithoutKey = await onRequest({
     request: makeRequest("/api/comments/pending"),
     env,
   });
   assert.equal(pendingWithoutKey.status, 401);
+
+  const manageableWithoutKey = await onRequest({
+    request: makeRequest("/api/comments/manage"),
+    env,
+  });
+  assert.equal(manageableWithoutKey.status, 401);
+
+  const pendingForAdmin = await onRequest({
+    request: makeRequest("/api/comments/manage", {
+      headers: { "X-Admin-Key": adminApiKey },
+    }),
+    env,
+  });
+  const pendingReview = (await pendingForAdmin.json()).comments.find(
+    (entry) => entry.id === review.id,
+  );
+  assert.equal(pendingReview.status, "pending");
+
+  const approved = await onRequest({
+    request: makeRequest(`/api/comments/${review.id}/approve`, {
+      method: "POST",
+      headers: { "X-Admin-Key": adminApiKey },
+    }),
+    env,
+  });
+  assert.equal(approved.status, 200);
+
+  const approvedForAdmin = await onRequest({
+    request: makeRequest("/api/comments/manage", {
+      headers: { "X-Admin-Key": adminApiKey },
+    }),
+    env,
+  });
+  const approvedReviewForAdmin = (
+    await approvedForAdmin.json()
+  ).comments.find((entry) => entry.id === review.id);
+  assert.equal(approvedReviewForAdmin.status, "approved");
 
   const publicForLaterVisitor = await onRequest({
     request: makeRequest("/api/comments"),
@@ -382,6 +422,82 @@ test("publishes new reviews immediately and keeps them visible to future visitor
   assert.equal(publishedReview.location, "Banjul");
   assert.equal(publishedReview.rating, 5);
   assert.equal(publishedReview.avatar, sharedPhotoAvatar);
+
+  const unauthorizedDelete = await onRequest({
+    request: makeRequest(`/api/comments/${review.id}`, { method: "DELETE" }),
+    env,
+  });
+  assert.equal(unauthorizedDelete.status, 401);
+
+  const deleted = await onRequest({
+    request: makeRequest(`/api/comments/${review.id}`, {
+      method: "DELETE",
+      headers: { "X-Admin-Key": adminApiKey },
+    }),
+    env,
+  });
+  assert.equal(deleted.status, 204);
+  const publicAfterDelete = await onRequest({
+    request: makeRequest("/api/comments"),
+    env,
+  });
+  assert.ok(
+    !(await publicAfterDelete.json()).comments.some(
+      (entry) => entry.id === review.id,
+    ),
+  );
+});
+
+test("blocks cross-origin API mutations and non-JSON submissions", async () => {
+  const crossOrigin = await onRequest({
+    request: makeRequest("/api/comments", {
+      method: "POST",
+      headers: {
+        Origin: "https://attacker.example",
+        "Sec-Fetch-Site": "cross-site",
+        "Content-Type": "text/plain",
+      },
+      body: JSON.stringify({
+        name: "Cross-origin",
+        rating: 5,
+        comment: "Should not be accepted.",
+      }),
+    }),
+    env: createEnvironment(),
+  });
+  assert.equal(crossOrigin.status, 403);
+
+  const wrongContentType = await onRequest({
+    request: makeRequest("/api/comments", {
+      method: "POST",
+      headers: {
+        Origin: "https://mmd.example",
+        "Content-Type": "text/plain",
+      },
+      body: JSON.stringify({
+        name: "Wrong content type",
+        rating: 5,
+        comment: "Should not be accepted.",
+      }),
+    }),
+    env: createEnvironment(),
+  });
+  assert.equal(wrongContentType.status, 415);
+});
+
+test("applies security headers and no-store caching to API responses", async () => {
+  const env = createEnvironment();
+  const response = await onRequest({
+    request: makeRequest("/api/comments"),
+    env,
+  });
+  assert.equal(response.headers.get("cache-control"), "no-store");
+  assert.equal(response.headers.get("x-content-type-options"), "nosniff");
+  assert.equal(response.headers.get("x-frame-options"), "DENY");
+  assert.equal(
+    response.headers.get("referrer-policy"),
+    "strict-origin-when-cross-origin",
+  );
 });
 
 test("rejects invalid reviews and validates review ratings", async () => {

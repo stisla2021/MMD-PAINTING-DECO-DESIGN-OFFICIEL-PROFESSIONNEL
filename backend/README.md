@@ -69,8 +69,8 @@ Returns saved quote requests newest first. This endpoint requires the configured
 Requires `name` (up to 100 characters), `rating` (an integer from 1 to 5), and
 `comment` (up to 2,000 characters). `location` is optional (up to 100
 characters), and `avatar` may be one of the site's emoji choices or a resized
-JPEG photo. Returns `201 Created`; new reviews are saved with `approved` status
-and shown publicly as soon as they are submitted.
+JPEG photo. Returns `201 Created`; new reviews are saved with `pending` status
+and do not appear publicly until an administrator approves them.
 
 ```json
 {
@@ -84,12 +84,13 @@ and shown publicly as soon as they are submitted.
 
 ### `GET /api/comments`
 
-Returns published reviews newest first.
+Returns approved reviews newest first.
 
-The protected `GET /api/comments/pending` endpoint and approval/rejection
-routes remain available for any reviews already awaiting moderation. Use the
-`X-Admin-Key` header for these endpoints. These controls are available on
-`Front-end/admin.html`.
+The protected `GET /api/comments/manage` endpoint lists pending and published
+reviews for the dashboard. `POST /api/comments/:id/approve` publishes a pending
+review, and `DELETE /api/comments/:id` removes a pending or published review.
+These operations require the `X-Admin-Key` header. The legacy
+`GET /api/comments/pending` endpoint continues to list only pending reviews.
 
 The public review form resizes photos to small JPEG avatars before submission.
 On Cloudflare, review records (including the compact avatar data) are stored in

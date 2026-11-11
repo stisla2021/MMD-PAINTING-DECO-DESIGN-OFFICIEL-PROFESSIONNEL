@@ -28,9 +28,19 @@ const allowedServices = new Set([
 ]);
 const quoteAlertRecipient = "mustaphajallow534@gmail.com";
 const quoteAdminUrl = "https://mmd-painting-deco-design.pages.dev/admin";
+const apiSecurityHeaders = {
+  "Cache-Control": "no-store",
+  "X-Content-Type-Options": "nosniff",
+  "X-Frame-Options": "DENY",
+  "Referrer-Policy": "strict-origin-when-cross-origin",
+  "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
+};
 
 function jsonResponse(body, status = 200, headers = {}) {
-  return Response.json(body, { status, headers });
+  return Response.json(body, {
+    status,
+    headers: { ...apiSecurityHeaders, ...headers },
+  });
 }
 
 function errorResponse(message, status, headers = {}) {
@@ -42,6 +52,17 @@ function methodNotAllowed(allowed) {
 }
 
 async function readJson(request, maximumSize = maximumJsonSize) {
+  const contentType = request.headers
+    .get("content-type")
+    ?.split(";", 1)[0]
+    .trim()
+    .toLowerCase();
+  if (contentType !== "application/json") {
+    return {
+      error: errorResponse("Content-Type must be application/json.", 415),
+    };
+  }
+
   const maximumSizeLabel = `${maximumSize / 1024} KB`;
   const contentLength = Number(request.headers.get("content-length") ?? 0);
   if (contentLength > maximumSize) {
@@ -384,7 +405,7 @@ async function getComments(request, env) {
     avatar,
     comment: comment.value,
     createdAt: new Date().toISOString(),
-    status: "approved",
+    status: "pending",
   };
   await env.DB.prepare(
     `INSERT INTO comments
@@ -403,9 +424,38 @@ async function getComments(request, env) {
     )
     .run();
   return jsonResponse(
-    { message: "Review submitted and published.", review: entry },
+    { message: "Review submitted for admin approval.", review: entry },
     201,
   );
+}
+
+async function getManageableComments(request, env) {
+  if (request.method !== "GET") {
+    return methodNotAllowed("GET");
+  }
+  const authorizationError = await authorize(request, env);
+  if (authorizationError) {
+    return authorizationError;
+  }
+
+  const { results } = await env.DB.prepare(
+    `SELECT id, name, location, rating, avatar, comment, created_at, status
+     FROM comments
+     ORDER BY CASE WHEN status = 'pending' THEN 0 ELSE 1 END,
+              created_at DESC, id DESC`,
+  ).all();
+  return jsonResponse({
+    comments: results.map((comment) => ({
+      id: comment.id,
+      name: comment.name,
+      location: comment.location,
+      ...(comment.rating === null ? {} : { rating: comment.rating }),
+      avatar: comment.avatar,
+      comment: comment.comment,
+      createdAt: comment.created_at,
+      status: comment.status,
+    })),
+  });
 }
 
 async function getPendingComments(request, env) {
@@ -428,7 +478,7 @@ async function getPendingComments(request, env) {
       id: comment.id,
       name: comment.name,
       location: comment.location,
-      rating: comment.rating,
+      ...(comment.rating === null ? {} : { rating: comment.rating }),
       avatar: comment.avatar,
       comment: comment.comment,
       createdAt: comment.created_at,
@@ -458,7 +508,7 @@ async function approveComment(request, env, id) {
   return jsonResponse({ message: "Review approved." });
 }
 
-async function rejectComment(request, env, id) {
+async function deleteComment(request, env, id) {
   if (request.method !== "DELETE") {
     return methodNotAllowed("DELETE");
   }
@@ -468,14 +518,14 @@ async function rejectComment(request, env, id) {
   }
 
   const deleted = await env.DB.prepare(
-    "DELETE FROM comments WHERE id = ? AND status = 'pending' RETURNING id",
+    "DELETE FROM comments WHERE id = ? RETURNING id",
   )
     .bind(id)
     .first();
   if (!deleted) {
-    return errorResponse("Pending review not found.", 404);
+    return errorResponse("Review not found.", 404);
   }
-  return new Response(null, { status: 204 });
+  return new Response(null, { status: 204, headers: apiSecurityHeaders });
 }
 
 async function getWorks(request, env) {
@@ -642,7 +692,22 @@ async function deleteWork(request, env, encodedId) {
   if (!work.image_key.startsWith("static:")) {
     await env.WORK_IMAGES.delete(work.image_key);
   }
-  return new Response(null, { status: 204 });
+  return new Response(null, { status: 204, headers: apiSecurityHeaders });
+}
+
+function validateMutationOrigin(request) {
+  if (!["POST", "PUT", "PATCH", "DELETE"].includes(request.method)) {
+    return null;
+  }
+
+  const origin = request.headers.get("origin");
+  if (
+    (origin && origin !== new URL(request.url).origin) ||
+    request.headers.get("sec-fetch-site") === "cross-site"
+  ) {
+    return errorResponse("Cross-origin requests are not allowed.", 403);
+  }
+  return null;
 }
 
 export async function onRequest({ request, env }) {
@@ -651,6 +716,10 @@ export async function onRequest({ request, env }) {
     const rateLimitResponse = await enforceRateLimit(request, env);
     if (rateLimitResponse) {
       return rateLimitResponse;
+    }
+    const originError = validateMutationOrigin(request);
+    if (originError) {
+      return originError;
     }
 
     if (url.pathname === "/api/health") {
@@ -667,6 +736,9 @@ export async function onRequest({ request, env }) {
     if (url.pathname === "/api/comments/pending") {
       return await getPendingComments(request, env);
     }
+    if (url.pathname === "/api/comments/manage") {
+      return await getManageableComments(request, env);
+    }
     const commentApprovalMatch = url.pathname.match(
       /^\/api\/comments\/([^/]+)\/approve$/,
     );
@@ -675,7 +747,7 @@ export async function onRequest({ request, env }) {
     }
     const commentMatch = url.pathname.match(/^\/api\/comments\/([^/]+)$/);
     if (commentMatch) {
-      return await rejectComment(request, env, commentMatch[1]);
+      return await deleteComment(request, env, commentMatch[1]);
     }
     if (url.pathname === "/api/works") {
       return await getWorks(request, env);

@@ -83,13 +83,35 @@ export function createCommentsRouter({ store, adminApiKey }) {
     return response.json({ comments });
   });
 
+  router.get("/manage", (request, response) => {
+    if (!requireAdmin(request, response, adminApiKey)) {
+      return;
+    }
+
+    const comments = store
+      .readAll()
+      .sort((left, right) => {
+        if (left.status !== right.status) {
+          return left.status === "pending" ? -1 : 1;
+        }
+        return right.createdAt.localeCompare(left.createdAt);
+      })
+      .map((comment) => ({
+        ...comment,
+        location: comment.location ?? "",
+        ...(comment.rating == null ? { rating: undefined } : {}),
+        avatar: comment.avatar ?? "🙂",
+        status: ["pending", "approved", "rejected"].includes(comment.status)
+          ? comment.status
+          : "approved",
+      }));
+    return response.json({ comments });
+  });
+
   router.get("/", (_request, response) => {
     const comments = store
       .readAll()
-      .filter(
-        (comment) =>
-          comment.status !== "pending" && comment.status !== "rejected",
-      )
+      .filter((comment) => comment.status === "approved")
       .sort((left, right) => right.createdAt.localeCompare(left.createdAt));
     return response.json({ comments });
   });
@@ -137,12 +159,12 @@ export function createCommentsRouter({ store, adminApiKey }) {
       avatar,
       comment: comment.value,
       createdAt: new Date().toISOString(),
-      status: "approved",
+      status: "pending",
     };
 
     store.append(review);
     return response.status(201).json({
-      message: "Review submitted and published.",
+      message: "Review submitted for admin approval.",
       review,
     });
   });
@@ -173,11 +195,10 @@ export function createCommentsRouter({ store, adminApiKey }) {
 
     const comments = store.readAll();
     const remainingComments = comments.filter(
-      (comment) =>
-        comment.id !== request.params.id || comment.status !== "pending",
+      (comment) => comment.id !== request.params.id,
     );
     if (remainingComments.length === comments.length) {
-      return response.status(404).json({ error: "Pending review not found." });
+      return response.status(404).json({ error: "Review not found." });
     }
 
     store.replaceAll(remainingComments);

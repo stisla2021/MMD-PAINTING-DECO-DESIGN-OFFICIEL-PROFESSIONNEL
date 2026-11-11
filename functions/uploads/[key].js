@@ -17,6 +17,7 @@ export async function onRequest({ params, env }) {
       "Cache-Control": "public, max-age=86400",
       "Content-Type": image.httpMetadata?.contentType ?? "application/octet-stream",
       "X-Content-Type-Options": "nosniff",
+      "Referrer-Policy": "strict-origin-when-cross-origin",
     },
   });
 }

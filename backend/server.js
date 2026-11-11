@@ -18,6 +18,7 @@ export function createApp({
   adminApiKey = process.env.ADMIN_API_KEY,
 } = {}) {
   const app = express();
+  app.disable("x-powered-by");
   mkdirSync(uploadsDirectory, { recursive: true });
   const developmentOrigins = [
     "http://localhost:8000",
@@ -34,6 +35,23 @@ export function createApp({
           .map((origin) => origin.trim())
           .filter(Boolean),
   );
+
+  app.use((request, response, next) => {
+    response.setHeader("X-Content-Type-Options", "nosniff");
+    response.setHeader("X-Frame-Options", "DENY");
+    response.setHeader(
+      "Referrer-Policy",
+      "strict-origin-when-cross-origin",
+    );
+    response.setHeader(
+      "Permissions-Policy",
+      "camera=(), microphone=(), geolocation=()",
+    );
+    if (request.path.startsWith("/api/")) {
+      response.setHeader("Cache-Control", "no-store");
+    }
+    next();
+  });
 
   app.use(
     cors({

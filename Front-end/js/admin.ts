@@ -28,11 +28,12 @@ interface AdminQuotesResponse {
 interface AdminReview {
   id: string;
   name: string;
-  location: string;
-  rating: number;
+  location?: string;
+  rating?: number;
   avatar: string;
   comment: string;
   createdAt: string;
+  status: "pending" | "approved" | "rejected";
 }
 
 interface AdminReviewsResponse {
@@ -180,16 +181,20 @@ function isAdminReview(value: unknown): value is AdminReview {
   return (
     typeof record.id === "string" &&
     typeof record.name === "string" &&
-    typeof record.location === "string" &&
-    typeof record.rating === "number" &&
-    Number.isInteger(record.rating) &&
-    record.rating >= 1 &&
-    record.rating <= 5 &&
+    (record.location === undefined || typeof record.location === "string") &&
+    (record.rating === undefined ||
+      (typeof record.rating === "number" &&
+        Number.isInteger(record.rating) &&
+        record.rating >= 1 &&
+        record.rating <= 5)) &&
     typeof record.avatar === "string" &&
     (["🙂", "😊", "😎", "🤗", "🎨", "🏠", "🌟"].includes(record.avatar) ||
       /^data:image\/jpeg;base64,[A-Za-z0-9+/]+={0,2}$/.test(record.avatar)) &&
     typeof record.comment === "string" &&
-    typeof record.createdAt === "string"
+    typeof record.createdAt === "string" &&
+    (record.status === "pending" ||
+      record.status === "approved" ||
+      record.status === "rejected")
   );
 }
 
@@ -433,7 +438,7 @@ function renderAdminReviews(reviews: AdminReview[]): void {
 
   if (reviews.length === 0) {
     const empty = document.createElement("p");
-    window.mmdSetTranslatedText(empty, "No reviews are waiting for approval.");
+    window.mmdSetTranslatedText(empty, "No customer reviews to manage.");
     adminReviewsContainer.append(empty);
     return;
   }
@@ -468,17 +473,29 @@ function renderAdminReviews(reviews: AdminReview[]): void {
     window.mmdSetTranslatedText(received, "Received {date}", {
       date: displayDate,
     });
-    heading.append(avatar, name, received);
+    const status = document.createElement("span");
+    status.className = `admin-review-status ${review.status}`;
+    window.mmdSetTranslatedText(
+      status,
+      review.status === "pending"
+        ? "Pending approval"
+        : review.status === "approved"
+          ? "Published"
+          : "Rejected",
+    );
+    heading.append(avatar, name, status, received);
 
     const rating = document.createElement("p");
     rating.className = "review-rating";
-    rating.textContent = `${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}`;
-    rating.setAttribute(
-      "aria-label",
-      window.mmdTranslateText("Rating: {rating} out of 5", {
-        rating: review.rating,
-      }),
-    );
+    if (review.rating !== undefined) {
+      rating.textContent = `${"★".repeat(review.rating)}${"☆".repeat(5 - review.rating)}`;
+      rating.setAttribute(
+        "aria-label",
+        window.mmdTranslateText("Rating: {rating} out of 5", {
+          rating: review.rating,
+        }),
+      );
+    }
 
     const location = document.createElement("p");
     if (review.location) {
@@ -492,21 +509,25 @@ function renderAdminReviews(reviews: AdminReview[]): void {
 
     const actions = document.createElement("div");
     actions.className = "admin-review-actions";
-    const approveButton = document.createElement("button");
-    approveButton.type = "button";
-    approveButton.className = "btn";
-    window.mmdSetTranslatedText(approveButton, "Approve");
-    approveButton.addEventListener("click", () => {
-      void moderateReview(review, approveButton, true);
+    if (review.status === "pending") {
+      const approveButton = document.createElement("button");
+      approveButton.type = "button";
+      approveButton.className = "btn";
+      window.mmdSetTranslatedText(approveButton, "Approve");
+      approveButton.addEventListener("click", () => {
+        void moderateReview(review, approveButton, true);
+      });
+      actions.append(approveButton);
+    }
+
+    const deleteButton = document.createElement("button");
+    deleteButton.type = "button";
+    deleteButton.className = "btn btn-danger";
+    window.mmdSetTranslatedText(deleteButton, "Delete");
+    deleteButton.addEventListener("click", () => {
+      void moderateReview(review, deleteButton, false);
     });
-    const rejectButton = document.createElement("button");
-    rejectButton.type = "button";
-    rejectButton.className = "btn btn-danger";
-    window.mmdSetTranslatedText(rejectButton, "Reject");
-    rejectButton.addEventListener("click", () => {
-      void moderateReview(review, rejectButton, false);
-    });
-    actions.append(approveButton, rejectButton);
+    actions.append(deleteButton);
 
     item.append(heading, rating);
     if (review.location) {
@@ -519,20 +540,20 @@ function renderAdminReviews(reviews: AdminReview[]): void {
 
 async function loadAdminReviews(): Promise<void> {
   adminRefreshReviewsButton.disabled = true;
-  window.mmdSetTranslatedText(adminReviewStatus, "Loading pending reviews...");
+  window.mmdSetTranslatedText(adminReviewStatus, "Loading customer reviews...");
 
   try {
-    const result = await requestJson(`${adminReviewsApiUrl}/pending`);
+    const result = await requestJson(`${adminReviewsApiUrl}/manage`);
     if (!isAdminReviewsResponse(result)) {
-      throw new Error("The server returned pending reviews in an unexpected format.");
+      throw new Error("The server returned customer reviews in an unexpected format.");
     }
     renderAdminReviews(result.comments);
     window.mmdSetTranslatedText(adminReviewStatus, "");
   } catch (error) {
-    console.error("Could not load pending reviews:", error);
+    console.error("Could not load customer reviews:", error);
     window.mmdSetTranslatedText(
       adminReviewStatus,
-      "Could not load pending reviews. {message}",
+      "Could not load customer reviews. {message}",
       {
         message: error instanceof Error ? error.message : "Please try again.",
       },
@@ -550,7 +571,7 @@ async function moderateReview(
   if (
     !approve &&
     !window.confirm(
-      window.mmdTranslateText('Reject "{name}"\'s review?', {
+      window.mmdTranslateText('Delete "{name}"\'s review?', {
         name: review.name,
       }),
     )
@@ -561,7 +582,7 @@ async function moderateReview(
   button.disabled = true;
   window.mmdSetTranslatedText(
     adminReviewStatus,
-    approve ? "Approving review..." : "Rejecting review...",
+    approve ? "Approving review..." : "Deleting review...",
   );
   try {
     await requestJson(
@@ -571,7 +592,7 @@ async function moderateReview(
     await loadAdminReviews();
     window.mmdSetTranslatedText(
       adminReviewStatus,
-      approve ? "Review approved and published." : "Review rejected.",
+      approve ? "Review approved and published." : "Review deleted.",
     );
   } catch (error) {
     console.error("Could not moderate the review:", error);
