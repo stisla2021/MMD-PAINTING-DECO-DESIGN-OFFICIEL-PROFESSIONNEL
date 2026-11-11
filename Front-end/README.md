@@ -48,6 +48,15 @@ The header and footer logo is `images/mmd-deco-logo.svg`, with
 image assets are kept in the `images/` folder. The home-page Recent Projects
 gallery includes six recent project photos and is loaded from the backend. The
 admin page can publish additional photos that appear there.
+Six Pexels stock photos are also kept in `images/` for possible future use;
+they are not currently shown on the site and must not be presented as MMD DECO
+projects. Pexels permits free commercial use without requiring attribution:
+[interior painting](https://www.pexels.com/photo/woman-holding-a-paint-roller-6474472/),
+[exterior painting](https://www.pexels.com/photo/two-men-in-white-work-uniforms-using-ladder-to-repaint-a-wooden-wall-16734519/),
+[commercial painting](https://www.pexels.com/photo/construction-workers-renovating-a-house-5493654/),
+[cabinet renovation](https://www.pexels.com/photo/men-working-inside-a-house-under-repairs-15124970/),
+[surface preparation](https://www.pexels.com/photo/repairman-polishing-wall-with-construction-tool-5767957/),
+and [color consultation](https://www.pexels.com/photo/a-spread-of-paint-color-swatches-6583367/).
 Cloudflare Pages Functions entrypoints remain in the project-root `functions/`
 folder, as required by Pages. Supporting backend code, D1 migrations, and
 Cloudflare Function tests are organized under the project-root `backend/`
