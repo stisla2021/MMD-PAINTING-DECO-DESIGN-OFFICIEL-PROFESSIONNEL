@@ -1139,6 +1139,24 @@ section {
     outline-offset: 3px;
 }
 
+.whatsapp-qr {
+    margin: 20px 0 0;
+    text-align: center;
+}
+
+.whatsapp-qr img {
+    display: block;
+    width: min(240px, 100%);
+    height: auto;
+    margin: 0 auto 8px;
+}
+
+.whatsapp-qr figcaption,
+.terms-note {
+    color: var(--gray);
+    font-size: 0.95rem;
+}
+
 .quote-next-steps {
     margin-top: 34px;
     padding: 20px;

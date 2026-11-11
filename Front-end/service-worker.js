@@ -1,4 +1,4 @@
-const cacheName = "mmd-static-v3";
+const cacheName = "mmd-static-v4";
 const appShell = [
   "/",
   "/index.html",
@@ -7,6 +7,7 @@ const appShell = [
   "/portfolio.html",
   "/comments.html",
   "/contact.html",
+  "/terms.html",
   "/style.css",
   "/manifest.webmanifest",
   "/js/language.js",
@@ -24,6 +25,7 @@ const appShell = [
   "/images/app-icon-192.png",
   "/images/app-icon-512.png",
   "/images/app-icon-maskable-512.png",
+  "/images/whatsapp-qr.png",
 ];
 
 self.addEventListener("install", (event) => {

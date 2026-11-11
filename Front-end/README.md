@@ -40,6 +40,7 @@ the same Wi-Fi, use the computer's LAN address and configure
 | Services      | Detailed list of painting services   |
 | Reviews       | View and submit customer reviews (`comments.html`) |
 | Contact       | Quote request form                   |
+| Terms         | Business service terms and customer guidelines (`terms.html`) |
 | Admin         | View quote requests, moderate reviews, and manage project photos (`admin.html`) |
 
 The header and footer logo is `images/mmd-deco-logo.svg`, with
@@ -70,8 +71,8 @@ and R2 for project images.
 ### Current behavior
 - The contact form validates and submits name, email, phone, service, and
   project details to `/api/quotes`. If the API is unavailable, the form offers
-  a WhatsApp link with the entered details prefilled. The WhatsApp buttons use
-  the owner contact QR link `https://wa.me/qr/VEF7XDQ7XXDAD1`.
+  a direct WhatsApp chat link with the entered details prefilled. WhatsApp
+  buttons and the downloadable QR code open `https://wa.me/2206240363`.
 - New quote requests trigger a generic email alert through Resend when
   `RESEND_API_KEY` and `QUOTE_ALERT_FROM` are configured. The alert links to the
   protected admin inbox and does not include customer details. Requests are

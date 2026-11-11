@@ -1,5 +1,5 @@
 "use strict";
-const whatsappContactUrl = "https://wa.me/qr/VEF7XDQ7XXDAD1";
+const whatsappContactUrl = "https://wa.me/2206240363";
 const quoteForm = document.getElementById("quoteForm");
 if (!(quoteForm instanceof HTMLFormElement)) {
     throw new Error('The quote form is missing the "#quoteForm" element.');
