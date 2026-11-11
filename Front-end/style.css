@@ -1400,6 +1400,137 @@ footer {
     margin-top: 60px;
 }
 
+.admin-analytics-controls,
+.analytics-custom-range {
+    display: flex;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.analytics-custom-range[hidden] {
+    display: none;
+}
+
+.analytics-date-field {
+    display: grid;
+    gap: 6px;
+}
+
+.analytics-date-field select,
+.analytics-date-field input {
+    min-height: 44px;
+    padding: 8px 12px;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    font: inherit;
+}
+
+.analytics-note {
+    max-width: 900px;
+    margin-bottom: 18px;
+    color: var(--gray);
+}
+
+.analytics-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 14px;
+    margin: 18px 0 28px;
+}
+
+.analytics-card {
+    padding: 20px;
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+}
+
+.analytics-card h3,
+.analytics-details h3 {
+    margin-bottom: 8px;
+    color: var(--primary);
+}
+
+.analytics-card strong {
+    display: block;
+    font-size: 1.8rem;
+    color: var(--primary);
+}
+
+.analytics-details {
+    display: grid;
+    grid-template-columns: minmax(0, 1.4fr) minmax(240px, 1fr);
+    gap: 24px;
+}
+
+.analytics-daily-list,
+.analytics-pages-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.analytics-daily-list {
+    max-height: 420px;
+    overflow: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 10px;
+}
+
+.analytics-daily-row {
+    display: grid;
+    grid-template-columns: 100px minmax(70px, 1fr) 150px;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.analytics-daily-row:last-child {
+    border-bottom: 0;
+}
+
+.analytics-daily-row progress {
+    width: 100%;
+    height: 12px;
+    accent-color: var(--primary);
+}
+
+.analytics-daily-count,
+.analytics-pages-list {
+    color: var(--gray);
+}
+
+.analytics-pages-list li {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 12px 0;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.analytics-pages-list li span:first-child {
+    overflow-wrap: anywhere;
+    color: var(--primary);
+}
+
+@media (max-width: 700px) {
+    .analytics-summary,
+    .analytics-details {
+        grid-template-columns: 1fr;
+    }
+
+    .analytics-daily-row {
+        grid-template-columns: 84px minmax(50px, 1fr);
+    }
+
+    .analytics-daily-count {
+        grid-column: 1 / -1;
+        text-align: right;
+    }
+}
+
 .admin-works-list {
     display: grid;
     gap: 16px;

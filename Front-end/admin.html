@@ -20,7 +20,7 @@
         <section class="page-hero">
             <div class="container">
                 <h1>Admin dashboard</h1>
-                <p>Manage quote requests, customer reviews, and project photos</p>
+                <p>Review website traffic, quote requests, customer reviews, and project photos</p>
             </div>
         </section>
 
@@ -42,6 +42,48 @@
                         <h2>Admin dashboard</h2>
                         <button id="adminLogout" type="button" class="btn btn-secondary">Lock admin</button>
                     </div>
+
+                    <section class="admin-current-work" aria-labelledby="analyticsHeading">
+                        <div class="admin-heading">
+                            <h2 id="analyticsHeading">Website analytics</h2>
+                            <button id="refreshAnalytics" type="button" class="btn btn-secondary">Refresh analytics</button>
+                        </div>
+                        <p class="analytics-note">Page views count page loads. Estimated unique browsers use an anonymous browser ID, not an exact count of people; clearing browser storage or switching devices can affect the estimate. Tracking begins when this feature goes live; earlier visits are unavailable.</p>
+                        <div class="admin-analytics-controls">
+                            <div class="analytics-date-field">
+                                <label for="analyticsRange">Date range</label>
+                                <select id="analyticsRange">
+                                    <option value="7">Last 7 days</option>
+                                    <option value="30">Last 30 days</option>
+                                    <option value="365">Last year</option>
+                                    <option value="custom">Custom range</option>
+                                </select>
+                            </div>
+                            <div id="analyticsCustomDates" class="analytics-custom-range" hidden>
+                                <div class="analytics-date-field">
+                                    <label for="analyticsStartDate">Start date</label>
+                                    <input id="analyticsStartDate" type="date">
+                                </div>
+                                <div class="analytics-date-field">
+                                    <label for="analyticsEndDate">End date</label>
+                                    <input id="analyticsEndDate" type="date">
+                                </div>
+                                <button id="applyAnalyticsRange" type="button" class="btn">Apply dates</button>
+                            </div>
+                        </div>
+                        <p id="analyticsStatus" class="comment-status" role="status" aria-live="polite"></p>
+                        <div id="analyticsSummary" class="analytics-summary" aria-live="polite"></div>
+                        <div class="analytics-details">
+                            <div role="region" aria-labelledby="analyticsDailyHeading">
+                                <h3 id="analyticsDailyHeading">Daily activity</h3>
+                                <ol id="analyticsDailyList" class="analytics-daily-list"></ol>
+                            </div>
+                            <div role="region" aria-labelledby="analyticsPagesHeading">
+                                <h3 id="analyticsPagesHeading">Most viewed pages</h3>
+                                <ol id="analyticsPagesList" class="analytics-pages-list"></ol>
+                            </div>
+                        </div>
+                    </section>
 
                     <section class="admin-current-work" aria-labelledby="quoteRequestsHeading">
                         <div class="admin-heading">

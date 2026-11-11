@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import { after, before, test } from "node:test";
-import { mkdtempSync, rmSync } from "node:fs";
+import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { createApp } from "../server.js";
@@ -137,6 +137,51 @@ test("rejects invalid quote input", async () => {
 
   assert.equal(response.status, 400);
   assert.match((await response.json()).error, /valid email/i);
+});
+
+test("tracks anonymous website visits and protects the analytics dashboard data", async () => {
+  const visitorId = "22222222-2222-4222-8222-222222222222";
+  const today = new Date().toISOString().slice(0, 10);
+  for (const [pagePath, id] of [
+    ["/contact.html", visitorId],
+    ["/contact", visitorId],
+    ["/terms.html", null],
+  ]) {
+    const response = await fetch(`${baseUrl}/api/analytics`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: pagePath, visitorId: id }),
+    });
+    assert.equal(response.status, 204);
+  }
+
+  const unauthorized = await fetch(
+    `${baseUrl}/api/analytics?start=${today}&end=${today}`,
+  );
+  assert.equal(unauthorized.status, 401);
+
+  const authorized = await fetch(
+    `${baseUrl}/api/analytics?start=${today}&end=${today}`,
+    { headers: { "X-Admin-Key": adminApiKey } },
+  );
+  assert.equal(authorized.status, 200);
+  assert.deepEqual(await authorized.json(), {
+    startDate: today,
+    endDate: today,
+    totals: { pageViews: 3, uniqueVisitors: 1 },
+    daily: [{ date: today, pageViews: 3, uniqueVisitors: 1 }],
+    pages: [
+      { path: "/contact", pageViews: 2 },
+      { path: "/terms", pageViews: 1 },
+    ],
+  });
+
+  const storedAnalytics = readFileSync(
+    path.join(dataDirectory, "analytics.json"),
+    "utf8",
+  );
+  assert.doesNotMatch(storedAnalytics, new RegExp(visitorId));
+  assert.match(storedAnalytics, /visitorHash/);
 });
 
 test("holds new reviews for admin approval and lets admins delete published reviews", async () => {

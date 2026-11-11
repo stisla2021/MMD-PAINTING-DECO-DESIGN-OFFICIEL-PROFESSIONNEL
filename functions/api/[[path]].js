@@ -1,6 +1,7 @@
 const maximumImageSize = 6 * 1024 * 1024;
 const maximumJsonSize = 10 * 1024;
 const maximumReviewJsonSize = 48 * 1024;
+const maximumAnalyticsJsonSize = 2 * 1024;
 const maximumAvatarDataUrlLength = 32_000;
 const rateLimitWindowMs = 15 * 60 * 1000;
 const rateLimitMaximum = 100;
@@ -35,6 +36,17 @@ const apiSecurityHeaders = {
   "Referrer-Policy": "strict-origin-when-cross-origin",
   "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
 };
+const analyticsVisitorIdPattern =
+  /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+const analyticsPaths = new Set([
+  "/",
+  "/about",
+  "/service",
+  "/portfolio",
+  "/comments",
+  "/contact",
+  "/terms",
+]);
 
 function jsonResponse(body, status = 200, headers = {}) {
   return Response.json(body, {
@@ -322,6 +334,221 @@ async function getQuotes(request, env) {
     },
     201,
   );
+}
+
+function normalizeAnalyticsPath(value) {
+  if (typeof value !== "string" || value.length > 256 || !value.startsWith("/")) {
+    return null;
+  }
+
+  const path = value.split(/[?#]/, 1)[0].replace(/\.html$/, "");
+  const normalizedPath = path === "/index" ? "/" : path;
+  return analyticsPaths.has(normalizedPath) ? normalizedPath : null;
+}
+
+function isValidAnalyticsDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+    return false;
+  }
+
+  const date = new Date(`${value}T00:00:00.000Z`);
+  return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
+}
+
+function getAnalyticsDateRange(url) {
+  const startDate = url.searchParams.get("start");
+  const endDate = url.searchParams.get("end");
+  if (
+    !startDate ||
+    !endDate ||
+    !isValidAnalyticsDate(startDate) ||
+    !isValidAnalyticsDate(endDate)
+  ) {
+    return { error: errorResponse("Choose valid start and end dates.", 400) };
+  }
+
+  const start = Date.parse(`${startDate}T00:00:00.000Z`);
+  const end = Date.parse(`${endDate}T00:00:00.000Z`);
+  const currentDate = new Date().toISOString().slice(0, 10);
+  if (
+    start > end ||
+    end > Date.parse(`${currentDate}T00:00:00.000Z`) ||
+    Math.floor((end - start) / 86_400_000) + 1 > 365
+  ) {
+    return {
+      error: errorResponse(
+        "The date range must be within the last 365 days and end today or earlier.",
+        400,
+      ),
+    };
+  }
+
+  return { startDate, endDate };
+}
+
+async function recordAnalyticsPageView(request, env) {
+  if (request.method !== "POST") {
+    return methodNotAllowed("GET, POST");
+  }
+
+  const parsed = await readJson(request, maximumAnalyticsJsonSize);
+  if (parsed.error) {
+    return parsed.error;
+  }
+
+  const pagePath = normalizeAnalyticsPath(parsed.body.path);
+  if (!pagePath) {
+    return errorResponse("Choose a valid public page path.", 400);
+  }
+  const visitorId = parsed.body.visitorId ?? null;
+  if (
+    visitorId !== null &&
+    (typeof visitorId !== "string" ||
+      !analyticsVisitorIdPattern.test(visitorId))
+  ) {
+    return errorResponse("The anonymous visitor ID is invalid.", 400);
+  }
+
+  const visitDay = new Date().toISOString().slice(0, 10);
+  const retentionCutoff = new Date(Date.now() - 399 * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+  const statements = [
+    env.DB.prepare("DELETE FROM analytics_daily_views WHERE visit_day < ?").bind(
+      retentionCutoff,
+    ),
+    env.DB.prepare(
+      "DELETE FROM analytics_daily_visitors WHERE visit_day < ?",
+    ).bind(retentionCutoff),
+    env.DB.prepare(
+      `INSERT INTO analytics_daily_views (visit_day, page_path, view_count)
+       VALUES (?, ?, 1)
+       ON CONFLICT (visit_day, page_path)
+       DO UPDATE SET view_count = view_count + 1`,
+    ).bind(visitDay, pagePath),
+  ];
+
+  if (visitorId) {
+    const digest = await crypto.subtle.digest(
+      "SHA-256",
+      new TextEncoder().encode(visitorId),
+    );
+    const visitorHash = Array.from(new Uint8Array(digest), (byte) =>
+      byte.toString(16).padStart(2, "0"),
+    ).join("");
+    statements.push(
+      env.DB.prepare(
+        `INSERT OR IGNORE INTO analytics_daily_visitors (visitor_hash, visit_day)
+         VALUES (?, ?)`,
+      ).bind(visitorHash, visitDay),
+    );
+  }
+
+  await env.DB.batch(statements);
+  return new Response(null, { status: 204, headers: apiSecurityHeaders });
+}
+
+async function getAnalytics(request, env, url) {
+  if (request.method !== "GET") {
+    return methodNotAllowed("GET, POST");
+  }
+
+  const authorizationError = await authorize(request, env);
+  if (authorizationError) {
+    return authorizationError;
+  }
+
+  const range = getAnalyticsDateRange(url);
+  if (range.error) {
+    return range.error;
+  }
+
+  const retentionCutoff = new Date(Date.now() - 399 * 86_400_000)
+    .toISOString()
+    .slice(0, 10);
+  await env.DB.batch([
+    env.DB.prepare("DELETE FROM analytics_daily_views WHERE visit_day < ?").bind(
+      retentionCutoff,
+    ),
+    env.DB.prepare(
+      "DELETE FROM analytics_daily_visitors WHERE visit_day < ?",
+    ).bind(retentionCutoff),
+  ]);
+
+  const { startDate, endDate } = range;
+  const [totalViews, totalVisitors, dailyViews, dailyVisitors, pages] =
+    await Promise.all([
+      env.DB.prepare(
+        `SELECT COALESCE(SUM(view_count), 0) AS page_views
+         FROM analytics_daily_views WHERE visit_day BETWEEN ? AND ?`,
+      )
+        .bind(startDate, endDate)
+        .first(),
+      env.DB.prepare(
+        `SELECT COUNT(DISTINCT visitor_hash) AS unique_visitors
+         FROM analytics_daily_visitors WHERE visit_day BETWEEN ? AND ?`,
+      )
+        .bind(startDate, endDate)
+        .first(),
+      env.DB.prepare(
+        `SELECT visit_day, SUM(view_count) AS page_views
+         FROM analytics_daily_views WHERE visit_day BETWEEN ? AND ?
+         GROUP BY visit_day ORDER BY visit_day`,
+      )
+        .bind(startDate, endDate)
+        .all(),
+      env.DB.prepare(
+        `SELECT visit_day, COUNT(*) AS unique_visitors
+         FROM analytics_daily_visitors WHERE visit_day BETWEEN ? AND ?
+         GROUP BY visit_day ORDER BY visit_day`,
+      )
+        .bind(startDate, endDate)
+        .all(),
+      env.DB.prepare(
+        `SELECT page_path, SUM(view_count) AS page_views
+         FROM analytics_daily_views WHERE visit_day BETWEEN ? AND ?
+         GROUP BY page_path ORDER BY page_views DESC, page_path LIMIT 10`,
+      )
+        .bind(startDate, endDate)
+        .all(),
+    ]);
+
+  const viewsByDay = new Map(
+    dailyViews.results.map((row) => [row.visit_day, Number(row.page_views)]),
+  );
+  const visitorsByDay = new Map(
+    dailyVisitors.results.map((row) => [
+      row.visit_day,
+      Number(row.unique_visitors),
+    ]),
+  );
+  const daily = [];
+  for (
+    let date = new Date(`${startDate}T00:00:00.000Z`);
+    date <= new Date(`${endDate}T00:00:00.000Z`);
+    date.setUTCDate(date.getUTCDate() + 1)
+  ) {
+    const day = date.toISOString().slice(0, 10);
+    daily.push({
+      date: day,
+      pageViews: viewsByDay.get(day) ?? 0,
+      uniqueVisitors: visitorsByDay.get(day) ?? 0,
+    });
+  }
+
+  return jsonResponse({
+    startDate,
+    endDate,
+    totals: {
+      pageViews: Number(totalViews?.page_views ?? 0),
+      uniqueVisitors: Number(totalVisitors?.unique_visitors ?? 0),
+    },
+    daily,
+    pages: pages.results.map((row) => ({
+      path: row.page_path,
+      pageViews: Number(row.page_views),
+    })),
+  });
 }
 
 async function getComments(request, env) {
@@ -729,6 +956,11 @@ export async function onRequest({ request, env }) {
     }
     if (url.pathname === "/api/quotes") {
       return await getQuotes(request, env);
+    }
+    if (url.pathname === "/api/analytics") {
+      return request.method === "POST"
+        ? await recordAnalyticsPageView(request, env)
+        : await getAnalytics(request, env, url);
     }
     if (url.pathname === "/api/comments") {
       return await getComments(request, env);

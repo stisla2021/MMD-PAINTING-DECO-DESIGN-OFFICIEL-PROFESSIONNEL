@@ -12,6 +12,8 @@ function createEnvironment() {
     quotes: [],
     comments: [],
     works: [],
+    analyticsViews: [],
+    analyticsVisitors: [],
   };
   const rateLimits = new Map();
   const images = new Map();
@@ -85,6 +87,37 @@ function createEnvironment() {
             });
           } else if (sql.startsWith("DELETE FROM works")) {
             tables.works = tables.works.filter((work) => work.id !== first);
+          } else if (sql.startsWith("INSERT INTO analytics_daily_views")) {
+            const existing = tables.analyticsViews.find(
+              (row) => row.visit_day === first && row.page_path === second,
+            );
+            if (existing) {
+              existing.view_count += 1;
+            } else {
+              tables.analyticsViews.push({
+                visit_day: first,
+                page_path: second,
+                view_count: 1,
+              });
+            }
+          } else if (sql.startsWith("INSERT OR IGNORE INTO analytics_daily_visitors")) {
+            const exists = tables.analyticsVisitors.some(
+              (row) => row.visitor_hash === first && row.visit_day === second,
+            );
+            if (!exists) {
+              tables.analyticsVisitors.push({
+                visitor_hash: first,
+                visit_day: second,
+              });
+            }
+          } else if (sql.startsWith("DELETE FROM analytics_daily_views")) {
+            tables.analyticsViews = tables.analyticsViews.filter(
+              (row) => row.visit_day >= first,
+            );
+          } else if (sql.startsWith("DELETE FROM analytics_daily_visitors")) {
+            tables.analyticsVisitors = tables.analyticsVisitors.filter(
+              (row) => row.visit_day >= first,
+            );
           } else {
             throw new Error(`Unexpected SQL in test: ${sql}`);
           }
@@ -123,6 +156,26 @@ function createEnvironment() {
             }
             return null;
           }
+          if (sql.startsWith("SELECT COALESCE(SUM(view_count)")) {
+            return {
+              page_views: tables.analyticsViews
+                .filter(
+                  (row) => row.visit_day >= this.values[0] && row.visit_day <= this.values[1],
+                )
+                .reduce((sum, row) => sum + row.view_count, 0),
+            };
+          }
+          if (sql.startsWith("SELECT COUNT(DISTINCT visitor_hash)")) {
+            return {
+              unique_visitors: new Set(
+                tables.analyticsVisitors
+                  .filter(
+                    (row) => row.visit_day >= this.values[0] && row.visit_day <= this.values[1],
+                  )
+                  .map((row) => row.visitor_hash),
+              ).size,
+            };
+          }
           throw new Error(`Unexpected SQL in test: ${sql}`);
         },
         async all() {
@@ -139,18 +192,78 @@ function createEnvironment() {
               ? tables.quotes
             : sql.startsWith("SELECT id, title, category")
               ? tables.works
+              : sql.startsWith("SELECT visit_day, SUM(view_count)")
+                ? Array.from(
+                    tables.analyticsViews
+                      .filter(
+                        (row) =>
+                          row.visit_day >= this.values[0] &&
+                          row.visit_day <= this.values[1],
+                      )
+                      .reduce((days, row) => {
+                        days.set(
+                          row.visit_day,
+                          (days.get(row.visit_day) ?? 0) + row.view_count,
+                        );
+                        return days;
+                      }, new Map()),
+                    ([visit_day, page_views]) => ({ visit_day, page_views }),
+                  )
+                : sql.startsWith("SELECT visit_day, COUNT(*)")
+                  ? Array.from(
+                      tables.analyticsVisitors
+                        .filter(
+                          (row) =>
+                            row.visit_day >= this.values[0] &&
+                            row.visit_day <= this.values[1],
+                        )
+                        .reduce((days, row) => {
+                          days.set(row.visit_day, (days.get(row.visit_day) ?? 0) + 1);
+                          return days;
+                        }, new Map()),
+                      ([visit_day, unique_visitors]) => ({
+                        visit_day,
+                        unique_visitors,
+                      }),
+                    )
+                  : sql.startsWith("SELECT page_path, SUM(view_count)")
+                    ? Array.from(
+                        tables.analyticsViews
+                          .filter(
+                            (row) =>
+                              row.visit_day >= this.values[0] &&
+                              row.visit_day <= this.values[1],
+                          )
+                          .reduce((paths, row) => {
+                            paths.set(
+                              row.page_path,
+                              (paths.get(row.page_path) ?? 0) + row.view_count,
+                            );
+                            return paths;
+                          }, new Map()),
+                        ([page_path, page_views]) => ({ page_path, page_views }),
+                      )
               : null;
           if (!records) {
             throw new Error(`Unexpected SQL in test: ${sql}`);
           }
           return {
             results: [...records].sort((left, right) =>
-              right.created_at.localeCompare(left.created_at),
+              String(right.created_at ?? right.visit_day ?? "").localeCompare(
+                String(left.created_at ?? left.visit_day ?? ""),
+              ),
             ),
           };
         },
       };
       return statement;
+    },
+    async batch(statements) {
+      const results = [];
+      for (const statement of statements) {
+        results.push(await statement.run());
+      }
+      return results;
     },
   };
 
@@ -260,6 +373,103 @@ test("accepts valid quotes and serves the health endpoint", async () => {
   assert.equal(env.tables.quotes.length, 1);
   assert.equal(env.tables.quotes[0].email, "test@example.com");
   assert.equal((await response.json()).notificationSent, false);
+});
+
+test("records page views and returns protected anonymous visitor statistics", async () => {
+  const env = createEnvironment();
+  const visitorId = "11111111-1111-4111-8111-111111111111";
+  const today = new Date().toISOString().slice(0, 10);
+  const rangeStart = new Date(`${today}T00:00:00.000Z`);
+  rangeStart.setUTCDate(rangeStart.getUTCDate() - 6);
+  const startDate = rangeStart.toISOString().slice(0, 10);
+  const trackPageView = async (path, id = visitorId) =>
+    onRequest({
+      request: makeRequest("/api/analytics", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ path, visitorId: id }),
+      }),
+      env,
+    });
+
+  assert.equal((await trackPageView("/contact.html")).status, 204);
+  assert.equal((await trackPageView("/contact")).status, 204);
+  assert.equal((await trackPageView("/terms.html", null)).status, 204);
+  assert.equal(env.tables.analyticsViews.length, 2);
+  assert.equal(env.tables.analyticsVisitors.length, 1);
+  assert.notEqual(env.tables.analyticsVisitors[0].visitor_hash, visitorId);
+  assert.match(env.tables.analyticsVisitors[0].visitor_hash, /^[a-f0-9]{64}$/);
+
+  const unauthorized = await onRequest({
+    request: makeRequest(`/api/analytics?start=${startDate}&end=${today}`),
+    env,
+  });
+  assert.equal(unauthorized.status, 401);
+
+  const authorized = await onRequest({
+    request: makeRequest(`/api/analytics?start=${startDate}&end=${today}`, {
+      headers: { "X-Admin-Key": adminApiKey },
+    }),
+    env,
+  });
+  assert.equal(authorized.status, 200);
+  const analytics = await authorized.json();
+  assert.equal(analytics.startDate, startDate);
+  assert.equal(analytics.endDate, today);
+  assert.deepEqual(analytics.totals, { pageViews: 3, uniqueVisitors: 1 });
+  assert.equal(analytics.daily.length, 7);
+  assert.deepEqual(analytics.daily.slice(0, 6), Array.from({ length: 6 }, (_, index) => {
+    const date = new Date(`${startDate}T00:00:00.000Z`);
+    date.setUTCDate(date.getUTCDate() + index);
+    return {
+      date: date.toISOString().slice(0, 10),
+      pageViews: 0,
+      uniqueVisitors: 0,
+    };
+  }));
+  assert.deepEqual(analytics.daily[6], {
+    date: today,
+    pageViews: 3,
+    uniqueVisitors: 1,
+  });
+  assert.deepEqual(analytics.pages, [
+    { path: "/contact", pageViews: 2 },
+    { path: "/terms", pageViews: 1 },
+  ]);
+});
+
+test("rejects invalid analytics paths, IDs, and date ranges", async () => {
+  const env = createEnvironment();
+  const invalidPath = await onRequest({
+    request: makeRequest("/api/analytics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        path: "/admin",
+        visitorId: "11111111-1111-4111-8111-111111111111",
+      }),
+    }),
+    env,
+  });
+  assert.equal(invalidPath.status, 400);
+
+  const invalidId = await onRequest({
+    request: makeRequest("/api/analytics", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ path: "/", visitorId: "not-an-id" }),
+    }),
+    env,
+  });
+  assert.equal(invalidId.status, 400);
+
+  const invalidRange = await onRequest({
+    request: makeRequest("/api/analytics?start=2026-02-31&end=2026-03-01", {
+      headers: { "X-Admin-Key": adminApiKey },
+    }),
+    env,
+  });
+  assert.equal(invalidRange.status, 400);
 });
 
 test("sends a generic Resend alert without customer details", async () => {

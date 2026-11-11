@@ -7,6 +7,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { createJsonStore } from "./lib/jsonStore.js";
 import { createCommentsRouter } from "./routes/comments.js";
+import { createAnalyticsRouter } from "./routes/analytics.js";
 import { createQuotesRouter } from "./routes/quotes.js";
 import { createWorksRouter } from "./routes/works.js";
 
@@ -96,6 +97,13 @@ export function createApp({
       store: createJsonStore(path.join(dataDirectory, "quotes.json")),
       adminApiKey,
       emailConfig: process.env,
+    }),
+  );
+  app.use(
+    "/api/analytics",
+    createAnalyticsRouter({
+      store: createJsonStore(path.join(dataDirectory, "analytics.json")),
+      adminApiKey,
     }),
   );
   app.use(

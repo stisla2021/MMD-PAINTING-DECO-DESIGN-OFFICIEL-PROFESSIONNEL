@@ -40,6 +40,28 @@ interface AdminReviewsResponse {
   comments: AdminReview[];
 }
 
+interface AdminAnalyticsDaily {
+  date: string;
+  pageViews: number;
+  uniqueVisitors: number;
+}
+
+interface AdminAnalyticsPage {
+  path: string;
+  pageViews: number;
+}
+
+interface AdminAnalyticsResponse {
+  startDate: string;
+  endDate: string;
+  totals: {
+    pageViews: number;
+    uniqueVisitors: number;
+  };
+  daily: AdminAnalyticsDaily[];
+  pages: AdminAnalyticsPage[];
+}
+
 const keyForm = document.getElementById("adminKeyForm");
 const keyInput = document.getElementById("adminKey");
 const adminPanel = document.getElementById("adminPanel");
@@ -54,9 +76,22 @@ const pendingReviewStatusElement = document.getElementById("reviewStatus");
 const logoutButton = document.getElementById("adminLogout");
 const refreshQuotesButton = document.getElementById("refreshQuotes");
 const refreshReviewsButton = document.getElementById("refreshReviews");
+const analyticsStatus = document.getElementById("analyticsStatus");
+const analyticsSummary = document.getElementById("analyticsSummary");
+const analyticsDailyList = document.getElementById("analyticsDailyList");
+const analyticsPagesList = document.getElementById("analyticsPagesList");
+const analyticsRangeSelect = document.getElementById("analyticsRange");
+const analyticsCustomDates = document.getElementById("analyticsCustomDates");
+const analyticsStartDateInput = document.getElementById("analyticsStartDate");
+const analyticsEndDateInput = document.getElementById("analyticsEndDate");
+const refreshAnalyticsButton = document.getElementById("refreshAnalytics");
+const applyAnalyticsRangeButton = document.getElementById(
+  "applyAnalyticsRange",
+);
 const adminApiUrl = window.mmdApiUrl("/api/works");
 const adminQuotesApiUrl = window.mmdApiUrl("/api/quotes");
 const adminReviewsApiUrl = window.mmdApiUrl("/api/comments");
+const adminAnalyticsApiUrl = window.mmdApiUrl("/api/analytics");
 let currentAdminKey = "";
 
 if (!(keyForm instanceof HTMLFormElement)) {
@@ -101,6 +136,36 @@ if (!(refreshQuotesButton instanceof HTMLButtonElement)) {
 if (!(refreshReviewsButton instanceof HTMLButtonElement)) {
   throw new Error('The admin page is missing the "#refreshReviews" button.');
 }
+if (!(analyticsStatus instanceof HTMLElement)) {
+  throw new Error('The admin page is missing the "#analyticsStatus" status area.');
+}
+if (!(analyticsSummary instanceof HTMLElement)) {
+  throw new Error('The admin page is missing the "#analyticsSummary" area.');
+}
+if (!(analyticsDailyList instanceof HTMLOListElement)) {
+  throw new Error('The admin page is missing the "#analyticsDailyList" list.');
+}
+if (!(analyticsPagesList instanceof HTMLOListElement)) {
+  throw new Error('The admin page is missing the "#analyticsPagesList" list.');
+}
+if (!(analyticsRangeSelect instanceof HTMLSelectElement)) {
+  throw new Error('The admin page is missing the "#analyticsRange" selector.');
+}
+if (!(analyticsCustomDates instanceof HTMLElement)) {
+  throw new Error('The admin page is missing the "#analyticsCustomDates" fields.');
+}
+if (!(analyticsStartDateInput instanceof HTMLInputElement)) {
+  throw new Error('The admin page is missing the "#analyticsStartDate" field.');
+}
+if (!(analyticsEndDateInput instanceof HTMLInputElement)) {
+  throw new Error('The admin page is missing the "#analyticsEndDate" field.');
+}
+if (!(refreshAnalyticsButton instanceof HTMLButtonElement)) {
+  throw new Error('The admin page is missing the "#refreshAnalytics" button.');
+}
+if (!(applyAnalyticsRangeButton instanceof HTMLButtonElement)) {
+  throw new Error('The admin page is missing the "#applyAnalyticsRange" button.');
+}
 
 const adminKeyForm: HTMLFormElement = keyForm;
 const adminKeyInput: HTMLInputElement = keyInput;
@@ -116,6 +181,28 @@ const adminReviewStatus: HTMLElement = pendingReviewStatusElement;
 const adminLogoutButton: HTMLButtonElement = logoutButton;
 const adminRefreshQuotesButton: HTMLButtonElement = refreshQuotesButton;
 const adminRefreshReviewsButton: HTMLButtonElement = refreshReviewsButton;
+const adminAnalyticsStatus: HTMLElement = analyticsStatus;
+const adminAnalyticsSummary: HTMLElement = analyticsSummary;
+const adminAnalyticsDailyList: HTMLOListElement = analyticsDailyList;
+const adminAnalyticsPagesList: HTMLOListElement = analyticsPagesList;
+const adminAnalyticsRangeSelect: HTMLSelectElement = analyticsRangeSelect;
+const adminAnalyticsCustomDates: HTMLElement = analyticsCustomDates;
+const adminAnalyticsStartDate: HTMLInputElement = analyticsStartDateInput;
+const adminAnalyticsEndDate: HTMLInputElement = analyticsEndDateInput;
+const adminRefreshAnalyticsButton: HTMLButtonElement = refreshAnalyticsButton;
+const adminApplyAnalyticsRangeButton: HTMLButtonElement =
+  applyAnalyticsRangeButton;
+const initialAnalyticsEndDate = new Date().toISOString().slice(0, 10);
+const initialAnalyticsStartDate = new Date(
+  `${initialAnalyticsEndDate}T00:00:00.000Z`,
+);
+initialAnalyticsStartDate.setUTCDate(initialAnalyticsStartDate.getUTCDate() - 29);
+adminAnalyticsStartDate.value = initialAnalyticsStartDate
+  .toISOString()
+  .slice(0, 10);
+adminAnalyticsEndDate.value = initialAnalyticsEndDate;
+adminAnalyticsStartDate.max = initialAnalyticsEndDate;
+adminAnalyticsEndDate.max = initialAnalyticsEndDate;
 
 const workImage = adminWorkForm.querySelector<HTMLInputElement>("#workImage");
 const uploadButton = adminWorkForm.querySelector<HTMLButtonElement>(
@@ -206,6 +293,59 @@ function isAdminReviewsResponse(value: unknown): value is AdminReviewsResponse {
   return Array.isArray(record.comments) && record.comments.every(isAdminReview);
 }
 
+function isNonNegativeInteger(value: unknown): value is number {
+  return typeof value === "number" && Number.isInteger(value) && value >= 0;
+}
+
+function isAdminAnalyticsDaily(value: unknown): value is AdminAnalyticsDaily {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.date === "string" &&
+    isNonNegativeInteger(record.pageViews) &&
+    isNonNegativeInteger(record.uniqueVisitors)
+  );
+}
+
+function isAdminAnalyticsPage(value: unknown): value is AdminAnalyticsPage {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  return (
+    typeof record.path === "string" &&
+    isNonNegativeInteger(record.pageViews)
+  );
+}
+
+function isAdminAnalyticsResponse(
+  value: unknown,
+): value is AdminAnalyticsResponse {
+  if (typeof value !== "object" || value === null) {
+    return false;
+  }
+  const record = value as Record<string, unknown>;
+  if (
+    typeof record.startDate !== "string" ||
+    typeof record.endDate !== "string" ||
+    typeof record.totals !== "object" ||
+    record.totals === null ||
+    !Array.isArray(record.daily) ||
+    !record.daily.every(isAdminAnalyticsDaily) ||
+    !Array.isArray(record.pages) ||
+    !record.pages.every(isAdminAnalyticsPage)
+  ) {
+    return false;
+  }
+  const totals = record.totals as Record<string, unknown>;
+  return (
+    isNonNegativeInteger(totals.pageViews) &&
+    isNonNegativeInteger(totals.uniqueVisitors)
+  );
+}
+
 function getAdminKey(): string {
   return currentAdminKey;
 }
@@ -256,6 +396,169 @@ async function requestJson(
   }
 
   return response.json();
+}
+
+function getAnalyticsDateRange(): {
+  startDate: string;
+  endDate: string;
+} | null {
+  const endDate = new Date().toISOString().slice(0, 10);
+  if (adminAnalyticsRangeSelect.value !== "custom") {
+    const days = Number(adminAnalyticsRangeSelect.value);
+    if (![7, 30, 365].includes(days)) {
+      return null;
+    }
+    const start = new Date(`${endDate}T00:00:00.000Z`);
+    start.setUTCDate(start.getUTCDate() - days + 1);
+    return { startDate: start.toISOString().slice(0, 10), endDate };
+  }
+
+  const startDate = adminAnalyticsStartDate.value;
+  const customEndDate = adminAnalyticsEndDate.value;
+  const datePattern = /^\d{4}-\d{2}-\d{2}$/;
+  if (
+    !datePattern.test(startDate) ||
+    !datePattern.test(customEndDate) ||
+    startDate > customEndDate ||
+    customEndDate > endDate
+  ) {
+    return null;
+  }
+
+  const dayCount =
+    Math.floor(
+      (Date.parse(`${customEndDate}T00:00:00.000Z`) -
+        Date.parse(`${startDate}T00:00:00.000Z`)) /
+        86_400_000,
+    ) + 1;
+  if (dayCount > 365) {
+    return null;
+  }
+  return { startDate, endDate: customEndDate };
+}
+
+function renderAdminAnalytics(analytics: AdminAnalyticsResponse): void {
+  adminAnalyticsSummary.replaceChildren();
+  for (const [label, count] of [
+    ["Page views", analytics.totals.pageViews],
+    ["Estimated unique browsers", analytics.totals.uniqueVisitors],
+  ] as const) {
+    const card = document.createElement("article");
+    card.className = "analytics-card";
+    const heading = document.createElement("h3");
+    window.mmdSetTranslatedText(heading, label);
+    const value = document.createElement("strong");
+    value.textContent = count.toLocaleString();
+    value.setAttribute("translate", "no");
+    card.append(heading, value);
+    adminAnalyticsSummary.append(card);
+  }
+
+  adminAnalyticsDailyList.replaceChildren();
+  const maximumViews = Math.max(
+    1,
+    ...analytics.daily.map((day) => day.pageViews),
+  );
+  for (const day of [...analytics.daily].reverse()) {
+    const item = document.createElement("li");
+    item.className = "analytics-daily-row";
+    const date = document.createElement("time");
+    date.dateTime = day.date;
+    date.textContent = new Date(`${day.date}T00:00:00.000Z`).toLocaleDateString(
+      undefined,
+      { timeZone: "UTC", month: "short", day: "numeric", year: "numeric" },
+    );
+    date.setAttribute("translate", "no");
+
+    const progress = document.createElement("progress");
+    progress.max = maximumViews;
+    progress.value = day.pageViews;
+    progress.setAttribute(
+      "aria-label",
+      window.mmdTranslateText("Page views: {count}", {
+        count: day.pageViews,
+      }),
+    );
+
+    const counts = document.createElement("span");
+    counts.className = "analytics-daily-count";
+    window.mmdSetTranslatedText(
+      counts,
+      "{views} views · {visitors} browsers",
+      {
+        views: day.pageViews.toLocaleString(),
+        visitors: day.uniqueVisitors.toLocaleString(),
+      },
+    );
+    item.append(date, progress, counts);
+    adminAnalyticsDailyList.append(item);
+  }
+
+  adminAnalyticsPagesList.replaceChildren();
+  if (analytics.pages.length === 0) {
+    const empty = document.createElement("li");
+    window.mmdSetTranslatedText(empty, "No page views for this range.");
+    adminAnalyticsPagesList.append(empty);
+    return;
+  }
+  for (const page of analytics.pages) {
+    const item = document.createElement("li");
+    const path = document.createElement("span");
+    path.textContent = page.path;
+    path.setAttribute("translate", "no");
+    const count = document.createElement("span");
+    window.mmdSetTranslatedText(count, "{count} views", {
+      count: page.pageViews.toLocaleString(),
+    });
+    item.append(path, count);
+    adminAnalyticsPagesList.append(item);
+  }
+}
+
+async function loadAdminAnalytics(
+  range: { startDate: string; endDate: string },
+): Promise<void> {
+  adminRefreshAnalyticsButton.disabled = true;
+  window.mmdSetTranslatedText(adminAnalyticsStatus, "Loading website analytics...");
+  try {
+    const parameters = new URLSearchParams(range);
+    const result = await requestJson(
+      `${adminAnalyticsApiUrl}?${parameters.toString()}`,
+    );
+    if (!isAdminAnalyticsResponse(result)) {
+      throw new Error("The server returned analytics in an unexpected format.");
+    }
+    renderAdminAnalytics(result);
+    window.mmdSetTranslatedText(
+      adminAnalyticsStatus,
+      "Showing data from {start} through {end}.",
+      { start: result.startDate, end: result.endDate },
+    );
+  } catch (error) {
+    console.error("Could not load website analytics:", error);
+    window.mmdSetTranslatedText(
+      adminAnalyticsStatus,
+      "Could not load website analytics. {message}",
+      {
+        message:
+          error instanceof Error ? error.message : "Please try again.",
+      },
+    );
+  } finally {
+    adminRefreshAnalyticsButton.disabled = false;
+  }
+}
+
+function loadSelectedAnalyticsRange(): void {
+  const range = getAnalyticsDateRange();
+  if (!range) {
+    window.mmdSetTranslatedText(
+      adminAnalyticsStatus,
+      "Choose a valid date range of up to 365 days ending today or earlier.",
+    );
+    return;
+  }
+  void loadAdminAnalytics(range);
 }
 
 function renderAdminWorks(works: AdminWork[]): void {
@@ -625,6 +928,10 @@ adminKeyForm.addEventListener("submit", async (event: SubmitEvent) => {
     setAuthenticated(true);
     await loadAdminQuotes();
     await loadAdminReviews();
+    const analyticsRange = getAnalyticsDateRange();
+    if (analyticsRange) {
+      await loadAdminAnalytics(analyticsRange);
+    }
   } catch (error) {
     console.error("Admin access could not be verified:", error);
     currentAdminKey = "";
@@ -642,6 +949,10 @@ adminLogoutButton.addEventListener("click", () => {
   window.mmdSetTranslatedText(adminQuoteStatus, "");
   adminReviewsContainer.replaceChildren();
   window.mmdSetTranslatedText(adminReviewStatus, "");
+  adminAnalyticsSummary.replaceChildren();
+  adminAnalyticsDailyList.replaceChildren();
+  adminAnalyticsPagesList.replaceChildren();
+  window.mmdSetTranslatedText(adminAnalyticsStatus, "");
   setAuthenticated(false);
 });
 
@@ -651,6 +962,22 @@ adminRefreshQuotesButton.addEventListener("click", () => {
 
 adminRefreshReviewsButton.addEventListener("click", () => {
   void loadAdminReviews();
+});
+
+adminAnalyticsRangeSelect.addEventListener("change", () => {
+  const isCustomRange = adminAnalyticsRangeSelect.value === "custom";
+  adminAnalyticsCustomDates.hidden = !isCustomRange;
+  if (!isCustomRange) {
+    loadSelectedAnalyticsRange();
+  }
+});
+
+adminRefreshAnalyticsButton.addEventListener("click", () => {
+  loadSelectedAnalyticsRange();
+});
+
+adminApplyAnalyticsRangeButton.addEventListener("click", () => {
+  loadSelectedAnalyticsRange();
 });
 
 adminWorkForm.addEventListener("submit", async (event: SubmitEvent) => {
