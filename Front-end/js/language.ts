@@ -416,6 +416,10 @@ const mmdFrenchTranslations: Record<string, string> = {
     "Scannez ou téléchargez notre code QR WhatsApp",
   "Service Area": "Zone desservie",
   "The Gambia and Senegal": "La Gambie et le Sénégal",
+  "Working Days": "Jours de travail",
+  "Sunday–Thursday: Open": "Ouvert du dimanche au jeudi",
+  "Friday: Closed": "Fermé le vendredi",
+  "Saturday: Open": "Ouvert le samedi",
   Social: "Réseaux sociaux",
   "What happens next?": "Que se passe-t-il ensuite ?",
   "Submit the form with a few project details and the service location.":
